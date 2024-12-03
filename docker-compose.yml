@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+
+  # Golang BE
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.be
+    ports:
+      - "8080:8080"
+    depends_on:
+      - pocketbase
+    environment:
+      - POCKETBASE_URL=http://pocketbase:8090
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-strongpassword123}
+    networks:
+      - elimt-network
+
+  # React FE
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.fe
+    ports:
+      - "80:5173"
+    environment:
+      - VITE_API_URL=http://backend:8080
+    depends_on:
+      - backend
+    networks:
+      - elimt-network
+
+  # PocketBase
+  pocketbase:
+    build:
+      context: ./pocketbase
+      dockerfile: Dockerfile.pb
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./pocketbase/pb_hooks:/pb_hooks
+      - ./pocketbase/pb_data:/pb_data
+    environment:
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@elimt.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-strongpassword123}
+    networks:
+      - elimt-network
+
+networks:
+  elimt-network:
+    driver: bridge
+
+volumes:
+  pocketbase_data:
