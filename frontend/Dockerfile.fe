@@ -1,22 +1,15 @@
 FROM node:18
 
-# 設置工作目錄
 WORKDIR /client
 
-# 複製 package.json 和 package-lock.json 以安裝依賴
 COPY package.json package-lock.json ./
 
-# 安裝依賴
 RUN npm install
 
-# 複製剩餘的應用程式文件
 COPY . .
 
-# 構建應用程式
 RUN npm run build
 
-# 曝露應用程式的服務埠
 EXPOSE 3000
 
-# 啟動應用程式（開發模式或生產模式）
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
