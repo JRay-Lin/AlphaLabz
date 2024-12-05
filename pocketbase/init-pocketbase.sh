@@ -2,14 +2,14 @@
 
 set -e
 
-# 設置變數
+# Variables
 PB_BINARY="./pocketbase"
 PB_VERSION="0.23.4"
 PB_URL="https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/pocketbase_${PB_VERSION}_linux_amd64.zip"
 
 echo "Starting PocketBase initialization..."
 
-# 檢查 PocketBase 是否存在，若不存在則下載
+# Check if PocketBase binary exists
 if [ ! -f "${PB_BINARY}" ]; then
     echo "PocketBase binary not found. Downloading..."
     wget -q "${PB_URL}" -O pocketbase.zip
@@ -21,19 +21,20 @@ else
     echo "PocketBase binary already exists. Skipping download."
 fi
 
-# 啟動 PocketBase 服務，並後台執行
+# Start PocketBase in the background
 "${PB_BINARY}" serve --http=0.0.0.0:8090 &
 PB_PID=$!
 
-# 等待 PocketBase 完全啟動
+# Wait for PocketBase to start
 echo "Waiting for PocketBase to start..."
 sleep 5
 
-# 使用 `superuser upsert` 指令來建立或更新 superuser 帳戶
+# Create superuser account
 echo "Creating or updating superuser..."
 "${PB_BINARY}" superuser upsert "${ADMIN_EMAIL}" "${ADMIN_PASSWORD}"
 
-# 檢查是否成功
+
+# Check if the command was successful
 if [ $? -eq 0 ]; then
     echo "Superuser created or updated successfully."
 else
@@ -42,6 +43,6 @@ else
     exit 1
 fi
 
-# 等待 PocketBase 停止，防止腳本提前退出
+# Wait for PocketBase to terminate
 echo "PocketBase is running. Waiting for process to terminate..."
 wait $PB_PID
