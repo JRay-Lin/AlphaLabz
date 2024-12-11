@@ -1,8 +1,25 @@
-version: '3.8'
-
 services:
+  pocketbase:
+    build:
+      context: ./pocketbase
+      dockerfile: Dockerfile.pb
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./pocketbase/pb_data:/pb/pb_data
+      - ./pocketbase/pb_hooks:/pb/pb_hooks
+      - ./pocketbase/pb_migrations:/pb/pb_migrations
+    environment:
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@elimt.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-strongpassword123}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/api/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - elimt-network
 
-  # Golang BE
   backend:
     build:
       context: ./backend
@@ -10,7 +27,8 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - pocketbase
+      pocketbase:
+        condition: service_healthy
     environment:
       - POCKETBASE_URL=http://pocketbase:8090
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.com}
@@ -18,7 +36,6 @@ services:
     networks:
       - elimt-network
 
-  # React FE
   frontend:
     build:
       context: ./frontend
@@ -29,22 +46,6 @@ services:
       - VITE_API_URL=http://backend:8080
     depends_on:
       - backend
-    networks:
-      - elimt-network
-
-  # PocketBase
-  pocketbase:
-    build:
-      context: ./pocketbase
-      dockerfile: Dockerfile.pb
-    ports:
-      - "8090:8090"
-    volumes:
-      - ./pocketbase/pb_hooks:/pb_hooks
-      - ./pocketbase/pb_data:/pb_data
-    environment:
-      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@elimt.com}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-strongpassword123}
     networks:
       - elimt-network
 
