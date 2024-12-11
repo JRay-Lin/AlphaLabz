@@ -25,11 +25,21 @@ type ListUsersResponse struct {
 }
 
 // ListUsers fetches all users from the PocketBase users collection
-func (p *PocketBaseClient) ListUsers() ([]User, error) {
+func (p *PocketBaseClient) ListUsers(token string) ([]User, error) {
 	url := fmt.Sprintf("%s/api/collections/users/records", p.BaseURL)
 
-	// Make GET request to fetch users
-	resp, err := http.Get(url)
+	// Create a new request
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Add Authorization header
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	// Make the request using http.Client
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch users: %w", err)
 	}

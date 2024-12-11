@@ -14,6 +14,30 @@ type PocketBaseClient struct {
 	BaseURL string
 }
 
+// Check pocketbase connection is working
+func (p *PocketBaseClient) CheckConnection() error {
+	url := fmt.Sprintf("%s/api/health", p.BaseURL)
+
+	// Create a new HTTP client with timeout
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	// Make GET request to health endpoint
+	resp, err := client.Get(url)
+	if err != nil {
+		return fmt.Errorf("failed to connect to PocketBase: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check if status code is OK (200)
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("PocketBase health check failed with status: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
 // NewPocketBaseClient initializes a new PocketBase client
 func NewPocketBaseClient(baseURL string) *PocketBaseClient {
 	return &PocketBaseClient{BaseURL: baseURL}
@@ -84,28 +108,4 @@ func (p *PocketBaseClient) AuthenticateUser(email, password string) (string, err
 	}
 
 	return respData.Token, nil
-}
-
-// Check pocketbase connection is working
-func (p *PocketBaseClient) CheckConnection() error {
-	url := fmt.Sprintf("%s/api/health", p.BaseURL)
-
-	// Create a new HTTP client with timeout
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
-
-	// Make GET request to health endpoint
-	resp, err := client.Get(url)
-	if err != nil {
-		return fmt.Errorf("failed to connect to PocketBase: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Check if status code is OK (200)
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("PocketBase health check failed with status: %d", resp.StatusCode)
-	}
-
-	return nil
 }

@@ -54,6 +54,10 @@ func setupRouter() *chi.Mux {
 		routes.HandleRegister(w, r, pbClient)
 	})
 
+	r.Get("/users", func(w http.ResponseWriter, r *http.Request) {
+		routes.HandleUserList(w, r, pbClient)
+	})
+
 	return r
 }
 
