@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os/exec"
 	"runtime"
 	"strings"
 )
@@ -12,44 +11,45 @@ import (
 func CheckDockerInstalled() bool {
 	fmt.Println("Checking if Docker is installed...")
 
-	dvSucess, dockerVersion := ExecCommand("docker", "--version")
-	dcvSucess, dockerComposeVersion := ExecCommand("docker-compose", "--version")
+	dvSucess, dockerVersion := ExecCommand(false, "docker", "-v")
+	dcvSucess, dockerComposeVersion := ExecCommand(false, "docker", "compose", "version")
 
 	if !dvSucess || !dcvSucess {
-		fmt.Println("Docker or Docker Compose is not installed. Please install Docker and Docker Compose.")
+		InstallDocker()
 		return false
 	}
 
 	fmt.Printf("Docker and Docker Compose are installed!\n")
-	fmt.Printf("Docker version: %s", dockerVersion)
-	fmt.Printf("Docker Compose version: %s\n", dockerComposeVersion)
+	fmt.Printf("%s", dockerVersion)
+	fmt.Printf("%s\n", dockerComposeVersion)
 	return true
 }
 
 // clearAllDocker stops and removes all running containers.
 func ClearAllDocker() {
-	fmt.Println("Stopping and removing all Docker containers...")
+	containers := []string{"elimt-eln-pocketbase-1", "elimt-eln-backend-1", "elimt-eln-frontend-1"}
 
-	// Stop all containers
-	cmd := exec.Command("docker", "stop", "$(docker ps -q)")
-	cmd.Stderr = nil
-	if err := cmd.Run(); err != nil {
-		log.Printf("Failed to stop containers: %v", err)
+	// Check and kill only running containers
+	for _, container := range containers {
+		isRunning := isContainerRunning(container)
+		if isRunning {
+			ExecCommand(true, "docker", "container", "kill", container)
+		}
 	}
 
-	// Remove all containers
-	cmd = exec.Command("docker", "rm", "-f", "$(docker ps -aq)")
-	if err := cmd.Run(); err != nil {
-		log.Printf("Failed to remove containers: %v", err)
-	} else {
-		fmt.Println("All containers have been removed.")
-	}
+	// Prune all stopped containers
+	ExecCommand(true, "docker", "container", "prune", "-f")
+
+	// Prune all unused images
+	ExecCommand(true, "docker", "image", "prune", "-a", "-f")
+
+	// Prune unused build cache with all build history
+	ExecCommand(true, "docker", "builder", "prune", "--all", "-f")
 }
-
 func CheckElimtRunning() bool {
-	success, feedback := ExecCommand("docker", "ps")
+	success, feedback := ExecCommand(false, "docker", "container", "ls")
 	if !success {
-		fmt.Println("Failed to execute docker ps")
+		fmt.Println("Failed to execute docker container ls")
 		return false
 	}
 
@@ -69,7 +69,8 @@ func CheckElimtRunning() bool {
 	}
 
 	if count > 0 {
-		fmt.Println("There are some container running but not all require container is running. This is not expected.")
+		fmt.Println("ELIMT containers already running")
+		fmt.Println("This is not expected...")
 		return true
 	}
 
@@ -77,17 +78,17 @@ func CheckElimtRunning() bool {
 }
 
 // runDockerCompose starts Docker Compose.
-func RunDockerCompose() {
+func RunDockerCompose() error {
 	fmt.Println("Starting Docker Compose...")
 
-	cmd := exec.Command("docker-compose", "up", "-d")
-	cmd.Stdout = nil
-	cmd.Stderr = nil
-	if err := cmd.Run(); err != nil {
-		log.Fatalf("Failed to start Docker Compose: %v", err)
+	// Execute the docker-compose command
+	success, output := ExecCommand(true, "docker", "compose", "up", "--detach")
+	if !success {
+		return fmt.Errorf("failed to start Docker Compose: %s", output)
 	}
 
 	fmt.Println("Docker Compose started successfully.")
+	return nil
 }
 
 func InstallDocker() {
@@ -96,7 +97,12 @@ func InstallDocker() {
 	switch osType {
 	case "linux":
 		fmt.Println("Detected Linux. Proceeding with Docker installation for Linux...")
-		installDockerLinux()
+
+		// Run docker-install.sh
+		if success, output := ExecCommand(false, "sudo ./docker-install.sh"); !success {
+			log.Fatalf("Docker installation failed: %s", output)
+		}
+
 	case "darwin":
 		fmt.Println("Detected macOS. Please install Docker Desktop manually from https://www.docker.com/products/docker-desktop.")
 	case "windows":
@@ -107,46 +113,12 @@ func InstallDocker() {
 	}
 }
 
-func installDockerLinux() {
-	// Update the package index
-	fmt.Println("Updating package index...")
-	cmd := exec.Command("sudo", "apt-get", "update")
-	if err := cmd.Run(); err != nil {
-		log.Fatalf("Failed to update package index: %v", err)
+// IsContainerRunning checks if a specific container is running
+func isContainerRunning(container string) bool {
+	success, output := ExecCommand(false, "docker", "inspect", "-f", "{{.State.Running}}", container)
+	if !success {
+		// If inspection fails, assume the container is not running
+		return false
 	}
-
-	// Download the Docker installation script
-	fmt.Println("Downloading Docker installation script...")
-	cmd = exec.Command("curl", "-fsSL", "https://get.docker.com", "-o", "get-docker.sh")
-	if err := cmd.Run(); err != nil {
-		log.Fatalf("Failed to download Docker installation script: %v", err)
-	}
-
-	// Run the installation script
-	fmt.Println("Running Docker installation script...")
-	cmd = exec.Command("sudo", "sh", "get-docker.sh")
-	if err := cmd.Run(); err != nil {
-		log.Fatalf("Failed to install Docker: %v", err)
-	}
-
-	// Install Docker Compose
-	fmt.Println("Installing Docker Compose...")
-	composeURL := "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)"
-	cmd = exec.Command("sudo", "curl", "-L", composeURL, "-o", "/usr/local/bin/docker-compose")
-	if err := cmd.Run(); err != nil {
-		log.Fatalf("Failed to download Docker Compose: %v", err)
-	}
-
-	cmd = exec.Command("sudo", "chmod", "+x", "/usr/local/bin/docker-compose")
-	if err := cmd.Run(); err != nil {
-		log.Fatalf("Failed to make Docker Compose executable: %v", err)
-	}
-
-	// Verify Installation
-	sucess := CheckDockerInstalled()
-	if !sucess {
-		log.Fatalf("Failed to verify Docker installation.")
-	}
-
-	fmt.Println("Docker and Docker Compose installed successfully!")
+	return strings.TrimSpace(output) == "true"
 }

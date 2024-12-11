@@ -86,7 +86,7 @@ func ConfirmInput(email, password string) bool {
 	screen.Clear()
 	screen.MoveTopLeft()
 
-	options := []string{"Confirm and save", "Re-enter email and password", "Exit setup"}
+	options := []string{"Confirm and start installation", "Re-enter email and password", "Exit setup"}
 
 	for {
 		fmt.Println(strings.Repeat("=", 40))
@@ -105,7 +105,8 @@ func ConfirmInput(email, password string) bool {
 		}
 
 		switch index {
-		case 0: // Confirm and save
+		case 0: // Confirm and start installation
+			screen.Clear()
 			return true
 		case 1: // Re-enter email and password
 			screen.Clear()

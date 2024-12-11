@@ -12,8 +12,7 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-// checkCommand checks if a command exists in the system.
-func ExecCommand(name string, args ...string) (bool, string) {
+func ExecCommand(logOutput bool, name string, args ...string) (bool, string) {
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 
@@ -23,8 +22,14 @@ func ExecCommand(name string, args ...string) (bool, string) {
 
 	err := cmd.Run()
 	if err != nil {
+		log.Printf("Command failed: %s %v\nError: %v\nStderr: %s", name, args, err, stderr.String())
 		return false, stderr.String() // Return false with stderr content
 	}
+
+	if logOutput {
+		log.Printf("Command succeeded: %s %v\nStdout: %s", name, args, out.String())
+	}
+
 	return true, out.String() // Return true with stdout content
 }
 
@@ -68,16 +73,41 @@ func main() {
 	case 0:
 		screen.Clear()
 		screen.MoveTopLeft()
-		for {
-			email := EmailInput()
-			password := PasswordInput()
 
-			if ConfirmInput(email, password) {
-				saveEnv(email, password)
-				fmt.Println("Setup completed successfully!")
-				break
-			}
+		email := EmailInput()
+		password := PasswordInput()
+
+		if ConfirmInput(email, password) {
+			saveEnv(email, password)
 		}
+		screen.Clear()
+		screen.MoveTopLeft()
+
+		elimtRunning := CheckElimtRunning()
+
+		if elimtRunning {
+			fmt.Println("Would you like to remove them?")
+
+			option := []string{"Yes and Continue Installation", "No and Exit installation"}
+			prompt := promptui.Select{
+				Label: "Choose an option",
+				Items: option,
+			}
+			index, _, err := prompt.Run()
+			if err != nil {
+				log.Fatalf("Prompt failed: %v\n", err)
+			}
+
+			if index == 0 {
+				ClearAllDocker()
+				RunDockerCompose()
+			} else {
+				log.Fatal("CLI terminated by user.") // Terminates the script
+			}
+		} else {
+			RunDockerCompose()
+		}
+
 	case 1:
 		screen.Clear()
 		screen.MoveTopLeft()
