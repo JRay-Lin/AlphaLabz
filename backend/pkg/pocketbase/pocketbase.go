@@ -19,10 +19,8 @@ func NewPocketBaseClient(baseURL string) *PocketBaseClient {
 	return &PocketBaseClient{BaseURL: baseURL}
 }
 
-// RegisterSuperser
-
 // RegisterUser registers a new user in the "users" collection
-func (p *PocketBaseClient) RegisterUser(email, password string) error {
+func (p *PocketBaseClient) RegisterUser(email, password, role string) error {
 	url := fmt.Sprintf("%s/api/collections/users/records", p.BaseURL)
 
 	// Data payload for the new user
@@ -30,6 +28,7 @@ func (p *PocketBaseClient) RegisterUser(email, password string) error {
 		"email":           email,
 		"password":        password,
 		"passwordConfirm": password,
+		"role":            role,
 	}
 
 	body, err := json.Marshal(data)
@@ -85,16 +84,6 @@ func (p *PocketBaseClient) AuthenticateUser(email, password string) (string, err
 	}
 
 	return respData.Token, nil
-}
-
-// VerifyAuthToken verifies the provided token (dummy implementation for this example)
-func (p *PocketBaseClient) VerifyAuthToken(token string) error {
-	if token == "" {
-		return errors.New("invalid token")
-	}
-	// This would typically involve contacting a server to verify the token
-	// For now, we'll assume it's valid if it's non-empty
-	return nil
 }
 
 // Check pocketbase connection is working
