@@ -46,16 +46,109 @@ func setupRouter() *chi.Mux {
 		log.Println("Server is healthy")
 	})
 
+	// Login to system
 	r.Post("/login", func(w http.ResponseWriter, r *http.Request) {
 		routes.HandleLogin(w, r, pbClient)
 	})
 
-	r.Post("/register", func(w http.ResponseWriter, r *http.Request) {
-		routes.HandleRegister(w, r, pbClient)
+	// Users route
+	r.Route("/users", func(r chi.Router) {
+		r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
+			routes.HandleUserList(w, r, pbClient)
+		})
+
+		r.Post("/register", func(w http.ResponseWriter, r *http.Request) {
+			routes.HandleRegister(w, r, pbClient)
+		})
+
+		r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleUserRemove(w, r, pbClient)
+		})
+
+		r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleUserUpdate(w, r, pbClient)
+		})
 	})
 
-	r.Get("/users", func(w http.ResponseWriter, r *http.Request) {
-		routes.HandleUserList(w, r, pbClient)
+	// Lab_book route
+	r.Route("/lab_book", func(r chi.Router) {
+		r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleLabBookList(w, r, pbClient)
+		})
+
+		r.Post("/create", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleLabBookCreate(w, r, pbClient)
+		})
+
+		r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleLabBookRemove(w, r, pbClient)
+		})
+
+		r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleLabBookUpdate(w, r, pbClient)
+		})
+	})
+
+	// Schedule routes
+	r.Route("/schedule", func(r chi.Router) {
+		r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleScheduleList(w, r, pbClient)
+		})
+		r.Post("/create", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleScheduleCreate(w, r, pbClient)
+		})
+		r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleScheduleRemove(w, r, pbClient)
+		})
+		r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleScheduleUpdate(w, r, pbClient)
+		})
+	})
+
+	// Link routes
+	r.Route("/link", func(r chi.Router) {
+		r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleScheduleList(w, r, pbClient)
+		})
+		r.Post("/create", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleScheduleCreate(w, r, pbClient)
+		})
+		r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleScheduleRemove(w, r, pbClient)
+		})
+		r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleScheduleUpdate(w, r, pbClient)
+		})
+	})
+
+	r.Route("/resources", func(r chi.Router) {
+		r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleScheduleList(w, r, pbClient)
+		})
+		r.Post("/create", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleScheduleCreate(w, r, pbClient)
+		})
+		r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleScheduleRemove(w, r, pbClient)
+		})
+		r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleScheduleUpdate(w, r, pbClient)
+		})
+
+		r.Route("/tags", func(r chi.Router) {
+			r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
+				// routes.HandleScheduleList(w, r, pbClient)
+			})
+			r.Post("/create", func(w http.ResponseWriter, r *http.Request) {
+				// routes.HandleScheduleCreate(w, r, pbClient)
+			})
+			r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
+				// routes.HandleScheduleRemove(w, r, pbClient)
+			})
+			r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
+				// routes.HandleScheduleUpdate(w, r, pbClient)
+			})
+		})
 	})
 
 	return r
