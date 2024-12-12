@@ -1,7 +1,12 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
     Home,
     Settings,
@@ -10,8 +15,10 @@ import {
     Menu,
     CalendarCheck,
     Package,
+    ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const Layout = () => {
     const [userRole, setUserRole] = useState(0);
@@ -41,24 +48,23 @@ const Layout = () => {
         },
         {
             icon: <FileText className="w-4 h-4" />,
-            label: "Reports",
-            id: "reports",
+            label: "Lab Books",
+            id: "labbooks",
             role: 1,
             subTabs: [
                 { name: "Upload", role: 1 },
                 { name: "Approval", role: 2 },
                 { name: "History", role: 1 },
-                { name: "Archive", role: 2 },
             ],
         },
         {
             icon: <CalendarCheck className="w-4 h-4" />,
-            label: "Schedule",
+            label: "Schedules",
             id: "schedules",
             role: 1,
             subTabs: [
                 { name: "List", role: 1 },
-                { name: "Create", role: 2 },
+                { name: "Create", role: 1 },
             ],
         },
         {
@@ -68,7 +74,7 @@ const Layout = () => {
             role: 1,
             subTabs: [
                 { name: "List", role: 1 },
-                { name: "Tags", role: 2 },
+                { name: "Tags", role: 1 },
             ],
         },
         {
@@ -78,18 +84,18 @@ const Layout = () => {
             role: 2,
             subTabs: [
                 { name: "All Users", role: 2 },
+                { name: "Register", role: 2 },
                 { name: "Permissions", role: 3 },
-                { name: "Register", role: 3 },
             ],
         },
         {
             icon: <Settings className="w-4 h-4" />,
             label: "Settings",
             id: "settings",
-            role: 3,
+            role: 1,
             subTabs: [
-                { name: "General", role: 3 },
-                { name: "Security", role: 3 },
+                { name: "General", role: 1 },
+                { name: "Security", role: 1 },
                 { name: "Notifications", role: 3 },
                 { name: "Integrations", role: 3 },
             ],
@@ -128,57 +134,142 @@ const Layout = () => {
 
     const isDesktop = windowWidth >= 1024;
 
-    const Navigation = () => (
-        <div className="h-full flex flex-col">
-            <div className="h-14 flex items-center px-4 border-b">
-                <h2 className="text-lg font-semibold">My App</h2>
-            </div>
+    const Navigation = () => {
+        const handleItemClick = (itemId: string) => {
+            setCurrentTab(itemId);
+            setCurrentSubTab("");
+            if (!isDesktop) {
+                setIsMobileOpen(false);
+            }
+        };
 
-            <ScrollArea className="flex-1 py-2">
-                <nav className="space-y-1 px-2">
-                    {navItems
-                        .filter((item) => userRole >= item.role)
-                        .map((item) => (
-                            <a
-                                key={item.id}
-                                href={`#${item.id}`}
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    setCurrentTab(item.id);
-                                    if (!isDesktop) {
-                                        setIsMobileOpen(false);
-                                    }
-                                }}
-                                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-gray-900 hover:bg-gray-100 ${
-                                    currentTab === item.id
-                                        ? "bg-gray-100 text-gray-900"
-                                        : "text-gray-500"
-                                }`}
-                            >
-                                {item.icon}
-                                <span>{item.label}</span>
-                            </a>
-                        ))}
-                </nav>
-            </ScrollArea>
-        </div>
-    );
+        const handleSubTabClick = (itemId: string, subTabName: string) => {
+            setCurrentTab(itemId);
+            setCurrentSubTab(subTabName);
+            if (!isDesktop) {
+                setIsMobileOpen(false);
+            }
+        };
+
+        return (
+            <div className="h-full flex flex-col">
+                <div className="h-14 flex flex-col items-center justify-center px-4 border-b">
+                    <h2 className="text-lg font-bold">AlphaLab</h2>
+                    <span className="text-xs text-gray-500">v0.0.1</span>
+                </div>
+
+                <ScrollArea className="flex-1 py-2">
+                    <nav className="space-y-1 px-2">
+                        {navItems
+                            .filter((item) => userRole >= item.role)
+                            .map((item) => {
+                                const hasSubTabs = item.subTabs.some(
+                                    (subTab) => userRole >= subTab.role
+                                );
+
+                                const filteredSubTabs = item.subTabs.filter(
+                                    (subTab) => userRole >= subTab.role
+                                );
+
+                                if (!hasSubTabs) {
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            role="button"
+                                            tabIndex={0}
+                                            onClick={() =>
+                                                handleItemClick(item.id)
+                                            }
+                                            className={cn(
+                                                "w-full flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-200 cursor-pointer hover:text-gray-900 hover:bg-gray-100",
+                                                currentTab === item.id &&
+                                                    currentSubTab === ""
+                                                    ? "bg-gray-100 text-gray-900"
+                                                    : "text-gray-500"
+                                            )}
+                                        >
+                                            {item.icon}
+                                            <span>{item.label}</span>
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <DropdownMenu key={item.id}>
+                                        <DropdownMenuTrigger asChild>
+                                            <div
+                                                className={cn(
+                                                    "w-full flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 cursor-pointer hover:text-gray-900 hover:bg-gray-100",
+                                                    currentTab === item.id
+                                                        ? "bg-gray-100 text-gray-900"
+                                                        : "text-gray-500"
+                                                )}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    {item.icon}
+                                                    <span>{item.label}</span>
+                                                </div>
+                                                <ChevronRight className="h-4 w-4" />
+                                            </div>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent
+                                            side="right"
+                                            align="start"
+                                            className="w-48"
+                                        >
+                                            {filteredSubTabs.map((subTab) => (
+                                                <DropdownMenuItem
+                                                    key={subTab.name}
+                                                    onClick={() =>
+                                                        handleSubTabClick(
+                                                            item.id,
+                                                            subTab.name
+                                                        )
+                                                    }
+                                                    className={cn(
+                                                        "cursor-pointer",
+                                                        currentTab ===
+                                                            item.id &&
+                                                            currentSubTab ===
+                                                                subTab.name
+                                                            ? "bg-gray-100"
+                                                            : ""
+                                                    )}
+                                                >
+                                                    {subTab.name}
+                                                </DropdownMenuItem>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                );
+                            })}
+                    </nav>
+                </ScrollArea>
+            </div>
+        );
+    };
+
+    // Get current navigation path for title
+    const getNavigationPath = () => {
+        const mainTab = getCurrentTabLabel();
+
+        return currentSubTab ? (
+            <span className="flex items-center">
+                <span className="text-gray-500">{mainTab}</span>
+                <span className="mx-2 text-gray-500">/</span>
+                <span className="text-black">{currentSubTab}</span>
+            </span>
+        ) : (
+            <span className="text-gray-500">{mainTab}</span>
+        );
+    };
 
     const getCurrentTabLabel = () => {
         return navItems.find((item) => item.id === currentTab)?.label || "";
     };
 
-    const getCurrentSubTabs = () => {
-        const currentNavItem = navItems.find((item) => item.id === currentTab);
-        if (!currentNavItem) return [];
-        return currentNavItem.subTabs
-            .filter((subTab) => userRole >= subTab.role)
-            .map((subTab) => subTab.name);
-    };
-
     return (
         <div className="min-h-screen bg-background">
-            {/* Rest of the layout code remains the same... */}
             {/* Desktop Navigation */}
             {isDesktop && (
                 <div className="fixed left-0 top-0 h-full w-64 border-r bg-background z-30">
@@ -212,57 +303,34 @@ const Layout = () => {
             >
                 {/* Fixed Header */}
                 <header className="flex-none border-b bg-background z-20">
-                    {/* Current Section Title */}
-                    <div className="border-b h-14 flex items-center px-6">
+                    {/* Navigation Path Title */}
+                    <div className="h-14 flex items-center px-6">
                         <div className="flex items-center">
                             {!isDesktop && <div className="w-8" />}
                             <h1 className="text-xl font-semibold">
-                                {getCurrentTabLabel()}
+                                {getNavigationPath()}
                             </h1>
                         </div>
                     </div>
-
-                    {/* Sub Features Tabs */}
-                    <Tabs
-                        value={currentSubTab}
-                        onValueChange={setCurrentSubTab}
-                        className="w-full"
-                    >
-                        <TabsList className="w-full justify-start rounded-none border-b h-12 px-6">
-                            {!isDesktop && <div className="w-12" />}
-                            <div className="flex-1 flex gap-2">
-                                {getCurrentSubTabs().map((subTab) => (
-                                    <TabsTrigger
-                                        key={subTab}
-                                        value={subTab}
-                                        className="data-[state=active]:bg-background px-4"
-                                    >
-                                        {subTab}
-                                    </TabsTrigger>
-                                ))}
-                            </div>
-                        </TabsList>
-                    </Tabs>
                 </header>
 
-                {/* Scrollable Content Area */}
+                {/* Main Content Area */}
                 <div className="flex-1 flex flex-col overflow-auto">
-                    {/* Main Tab Content */}
                     <main className="flex-1 p-6">
                         <div className="rounded-lg border p-4">
-                            <h2 className="text-lg font-medium mb-2">
-                                {getCurrentTabLabel()} - {currentSubTab}
-                            </h2>
-                            <p>Content for {currentSubTab} will go here</p>
+                            <p>
+                                Content for{" "}
+                                {currentSubTab || getCurrentTabLabel()} will go
+                                here
+                            </p>
                         </div>
                     </main>
 
-                    {/* Footer */}
-                    <footer className="flex-none border-t p-4 text-center bg-background">
+                    <footer className="flex-none border-t p-3 text-center bg-background">
                         <p className="text-[#B4B4B4]">
                             Copyright ©{" "}
                             <a
-                                href="https://github.com/JRay9487"
+                                href="https://github.com/JRay-Lin/AlphaLab"
                                 className="text-[#4096B6] hover:underline"
                                 target="_blank"
                                 rel="noopener noreferrer"
