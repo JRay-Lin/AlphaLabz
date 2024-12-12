@@ -2,3 +2,5 @@
 *.env
 elimt-cli-mac
 pretty.json
+pocketbase/pb_data/data.db-shm
+pocketbase/pb_data/data.db-wal
