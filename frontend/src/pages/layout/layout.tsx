@@ -30,7 +30,7 @@ const Layout = () => {
     );
 
     useEffect(() => {
-        setUserRole(1); // for dev - setting as admin
+        setUserRole(3); // for dev - setting as admin
     }, []);
 
     const navItems = [
@@ -62,20 +62,14 @@ const Layout = () => {
             label: "Schedules",
             id: "schedules",
             role: 1,
-            subTabs: [
-                { name: "List", role: 1 },
-                { name: "Create", role: 1 },
-            ],
+            subTabs: [],
         },
         {
             icon: <Package className="w-4 h-4" />,
             label: "Resources",
             id: "resources",
             role: 1,
-            subTabs: [
-                { name: "List", role: 1 },
-                { name: "Tags", role: 1 },
-            ],
+            subTabs: [],
         },
         {
             icon: <Users className="w-4 h-4" />,
