@@ -2,7 +2,7 @@ import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // Pages
-import Layout from "./pages/layout/layout";
+import Layout from "./pages/main/Layout";
 import Login from "./pages/login/Login";
 
 function AppRouter() {
