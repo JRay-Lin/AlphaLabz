@@ -1,7 +1,6 @@
 <div align=center>
   <img width =256 src="./logo.jpg"/>
   <h1>AlphaLab</h1>
-  <p>Simple and easy to use Electronic Laboratory Info Mangement Tools.</p>
 </div>
 
 ## Table of Contents
