@@ -1,16 +1,16 @@
 # AlphaLab
 
 ## Table of Contents
-1. [Introduction](#introduction)
-2. [Architecture Overview](#architecture-overview)
-3. [Key Features](#key-features)
-4. [Small Features](#small-features)
-5. [Getting Started](#getting-started)
-6. [Installation](#installation)
-7. [Usage](#usage)
-8. [Development Roadmap](#development-roadmap)
-10. [License](#license)
-11. [Support and Contact](#support-and-contact)
+- [Introduction](#introduction)
+- [Architecture Overview](#architecture-overview)
+- [Features](#features)
+	- [Key Features](#key-features)
+	- [Small Features](#small-features)
+- [Getting Started](#getting-started)
+	- [Installation](#installation)
+ 	- [Development Roadmap](#development-roadmap)
+- [License](#license)
+- [Support and Contact](#support-and-contact)
 
 ---
 
@@ -40,8 +40,8 @@ AlphaLab is divided into three main parts:
    - Requires **Docker** for containerized deployment.
 
 ---
-
-## Key Features
+## Features
+### Key Features
 1. **Lab Book Management**
    - Users can upload lab books in PDF format along with a description.
    - Files can be stored:
@@ -60,9 +60,7 @@ AlphaLab is divided into three main parts:
    - Track equipment usage, inventory, and supplies.
    - Generate detailed reports for inventory audits.
 
----
-
-## Small Features
+### Small Features
 1. **SMTP Mailer**
    - The Docker setup includes a small SMTP mailer for sending notifications.
    - Users must provide a domain for the mailer to work.
@@ -94,7 +92,10 @@ AlphaLab is divided into three main parts:
 
 ### Prerequisites
 1. **Docker**  
-   Ensure Docker is installed on your system. Download it [here](https://www.docker.com/).
+   Ensure Docker is installed on your system. You can download it [here](https://www.docker.com/).
+
+2. **Domain**  
+   AlphaLab requires a domain to set up its SMTP server. You can purchase a domain from any provider, such as [Namecheap](https://www.namecheap.com/) or [GoDaddy](https://www.godaddy.com/).
 
 ---
 
