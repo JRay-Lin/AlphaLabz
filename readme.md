@@ -9,7 +9,6 @@
 - [Getting Started](#getting-started)
 	- [Installation](#installation)
  	- [Development Roadmap](#development-roadmap)
-- [License](#license)
 - [Support and Contact](#support-and-contact)
 
 ---
@@ -20,7 +19,7 @@
 - A robust **backend** powered by **Golang** and **PocketBase** for seamless data management.
 - A convenient **CLI** tool that simplifies software setup using **Docker**.
 
-AlphaLab is open-source under the [MIT License](LICENSE).
+AlphaLab is open-source under the [Apache License](LICENSE).
 
 ---
 
@@ -150,10 +149,6 @@ AlphaLab is divided into three main parts:
 
 
 ---
-
-## License
-
-AlphaLab is licensed under the Apache 2.0 License. For details, see the LICENSE file.
 
 ## Support and Contact
 
