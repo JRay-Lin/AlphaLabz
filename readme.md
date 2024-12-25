@@ -152,7 +152,7 @@ AlphaLab is divided into three main parts:
 
 ## License
 
-AlphaLab is licensed under the MIT License. For details, see the LICENSE file.
+AlphaLab is licensed under the Apache 2.0 License. For details, see the LICENSE file.
 
 ## Support and Contact
 
