@@ -1,4 +1,9 @@
-# AlphaLab
+<div align=center>
+  <img width =256 src="./logo.jpg"/>
+  <h1>AlphaLab</h1>
+  <p>Simple and easy to use Electronic Laboratory Info Mangement Tools.</p>
+  <br><br>
+</div>
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -147,11 +152,9 @@ AlphaLab is divided into three main parts:
   - [ ] Automate deployment workflows using CI/CD pipelines.
 """
 
-
 ---
 
 ## Support and Contact
-
 If you have any questions or issues:
-	•	GitHub Issues: Report issues here
-	•	Email: ...
+- GitHub Issues: Report issues here
+- Email: ...
