@@ -144,10 +144,7 @@ AlphaLab is divided into three main parts:
 - [ ] **Enhanced Features**
   - [ ] Add commands for managing users, resetting settings, and backing up data.
   - [ ] Enable live logs for monitoring backend and frontend performance.
-
-- [ ] **Documentation and Automation**
-  - [ ] Document all CLI commands with usage examples.
-  - [ ] Automate deployment workflows using CI/CD pipelines.
+  - [ ] Document all CLI commands with 
 """
 
 ---
