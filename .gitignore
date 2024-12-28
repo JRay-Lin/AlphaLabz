@@ -5,3 +5,4 @@ pretty.json
 pocketbase/pb_data/data.db-shm
 pocketbase/pb_data/data.db-wal
 .vscode/launch.json
+cli/main
