@@ -1,6 +1,7 @@
 package main
 
 import (
+	"alphalab-cli/pkg/installation"
 	"fmt"
 
 	"github.com/alecthomas/kong"
@@ -14,7 +15,6 @@ type GreetCmd struct {
 	Name string `arg:"" required:"" help:"Name of the person to greet."`
 }
 
-// Run executes the 'greet' command
 func (g *GreetCmd) Run() error {
 	fmt.Printf("Hello, %s!\n", g.Name)
 	return nil
@@ -44,8 +44,9 @@ func (v *VersionCmd) Run() error {
 
 // CLI struct defines the commands and flags for CLI
 type CLI struct {
-	Greet   GreetCmd   `cmd:"" help:"Print a greeting."`
-	Version VersionCmd `cmd:"" short:"v" help:"Print CLI & App version information."`
+	Greet   GreetCmd                `cmd:"" help:"Print a greeting."`
+	Version VersionCmd              `cmd:"" short:"v" help:"Print CLI & App version information."`
+	Install installation.InstallCmd `cmd:"" help:"Install the app."`
 }
 
 func main() {
