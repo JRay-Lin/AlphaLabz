@@ -1,6 +1,6 @@
 services:
   pocketbase:
-    container_name: alphalab-pocketbase
+    container_name: alphalabz-pocketbase
     build:
       context: ./pocketbase
       dockerfile: Dockerfile.pb
@@ -20,8 +20,9 @@ services:
       retries: 5
     networks:
       - elimt-network
+
   backend:
-    container_name: alphalab-backend
+    container_name: alphalabz-backend
     build:
       context: ./backend
       dockerfile: Dockerfile.be
@@ -34,11 +35,16 @@ services:
       - POCKETBASE_URL=http://pocketbase:8090
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.com}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-strongpassword123}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - elimt-network
 
   frontend:
-    container_name: alphalab-frontend
+    container_name: alphalabz-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile.fe
