@@ -1,7 +1,7 @@
 *.DS_Store
 *.env
-elimt-cli-mac
-pretty.json
-.vscode/launch.json
-cli/main
+
+.vscode/
 /mailserver
+
+elimt-cli-mac
