@@ -7,40 +7,45 @@ import (
 	"regexp"
 	"runtime"
 
+	"alphalab-cli/pkg/setting"
+
 	"github.com/manifoldco/promptui"
 )
 
-type InstallCmd struct{}
+// InstallCmd struct holds the repository URL needed for installation
+type InstallCmd struct {
+}
 
-const repoUrl string = "https://github.com/JRay-Lin/AlphaLab.git"
-
+// Run executes the installation process
 func (g *InstallCmd) Run() error {
 	fmt.Println("Welcome to the AlphaLab installation process!")
 
+	// Check if all necessary tools are installed
 	if err := checkRequirements(); err != nil {
 		return fmt.Errorf("failed to check requirements: %v", err)
 	}
 
+	// Prompt the user for admin email and password with validation
 	email, err := promptEmail()
 	if err != nil {
 		return fmt.Errorf("email input error: %v", err)
 	}
-
 	password, err := promptPassword()
 	if err != nil {
 		return fmt.Errorf("password input error: %v", err)
 	}
-
 	if _, err := promptVerifyPassword(password); err != nil {
 		return fmt.Errorf("password verification error: %v", err)
 	}
 
+	// Confirmation loop for settings verification and modification
 	for {
 		fmt.Println("\n========== Your Settings ==========")
 		fmt.Printf("Admin Email: %s\n", email)
 		fmt.Printf("Admin Password: %s\n", password)
 		fmt.Println("===================================")
 
+		// Confirm settings before proceeding
 		confirm := promptui.Select{
 			Label: "Please confirm your settings",
 			Items: []string{"Confirm and continue", "Modify settings"},
@@ -56,7 +61,7 @@ func (g *InstallCmd) Run() error {
 			break
 		}
 
-		// User wants to modify settings
+		// If user chooses to modify settings
 		choice := promptui.Select{
 			Label: "What would you like to change",
 			Items: []string{"Email", "Password", "Back to confirmation"},
@@ -68,12 +73,12 @@ func (g *InstallCmd) Run() error {
 		}
 
 		switch idx {
-		case 0: // Email
+		case 0: // Modify Email
 			email, err = promptEmail()
 			if err != nil {
 				return fmt.Errorf("email modification error: %v", err)
 			}
-		case 1: // Password
+		case 1: // Modify Password
 			password, err = promptPassword()
 			if err != nil {
 				return fmt.Errorf("password modification error: %v", err)
@@ -81,18 +86,21 @@ func (g *InstallCmd) Run() error {
 			if _, err := promptVerifyPassword(password); err != nil {
 				return fmt.Errorf("password verification error: %v", err)
 			}
-		case 2: // Back to confirmation
+		case 2: // Return to confirmation
 			continue
 		}
 	}
 
+	// Clear screen for a cleaner installation process
 	Clear()
 
 	fmt.Println("\nStarting AlphaLab installation...")
+	// Perform the installation
 	if err := installAlphalab(email, password); err != nil {
 		return fmt.Errorf("failed to install AlphaLab: %v", err)
 	}
 
+	// Verify the installation process
 	fmt.Println("Verifying AlphaLab installation...")
 	if err := verifyAlphalabStatus(); err != nil {
 		return fmt.Errorf("failed to verify AlphaLab installation: %v", err)
@@ -102,6 +110,121 @@ func (g *InstallCmd) Run() error {
 	return nil
 }
 
+// checkRequirements ensures all necessary tools are installed before proceeding
+func checkRequirements() error {
+	// Verify Docker is installed
+	_, err := exec.Command("docker", "--version").Output()
+	if err != nil {
+		return fmt.Errorf("docker is not installed, please install docker first")
+	}
+
+	// Verify Docker Compose is installed
+	_, err = exec.Command("docker", "compose", "version").Output()
+	if err != nil {
+		return fmt.Errorf("docker compose is not installed, please install docker compose first")
+	}
+
+	// Verify Git is installed
+	_, err = exec.Command("git", "--version").Output()
+	if err != nil {
+		return fmt.Errorf("git is not installed, please install git first")
+	}
+
+	return nil
+}
+
+// installAlphalab performs the cloning and setup of the repository using Docker Compose
+func installAlphalab(ADMIN_EMAIL string, ADMIN_PASSWORD string) error {
+	const folderName = "AlphaLab"
+
+	// Check if the AlphaLab directory already exists
+	if _, err := os.Stat(folderName); !os.IsNotExist(err) {
+		fmt.Println("The AlphaLab directory already exists.")
+		// Ask user if they want to update the existing repo
+		prompt := promptui.Select{
+			Label: "Do you want to update the existing repository instead?",
+			Items: []string{"Update the repository", "Cancel installation"},
+		}
+
+		idx, _, err := prompt.Run()
+		if err != nil {
+			return fmt.Errorf("error in user selection: %v", err)
+		}
+
+		if idx == 0 {
+			// Update the existing repository
+			fmt.Println("Updating the existing AlphaLab repository...")
+			cmd := exec.Command("git", "-C", folderName, "pull")
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("failed to update repository: %v", err)
+			}
+			fmt.Println("Repository updated successfully.")
+		} else {
+			// Cancel installation if user chooses not to update
+			fmt.Println("Installation cancelled.")
+			return nil
+		}
+	} else {
+		// If the folder does not exist, clone the repository
+		fmt.Println("Cloning the repository...")
+		cmd := exec.Command("git", "clone", setting.RepoUrl)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("failed to clone repository: %v", err)
+		}
+		fmt.Println("Repository cloned successfully.")
+	}
+
+	// Change working directory to the cloned repository
+	err := os.Chdir(folderName)
+	if err != nil {
+		return fmt.Errorf("failed to enter AlphaLab folder: %v", err)
+	}
+
+	// Run Docker Compose with provided admin credentials
+	cmd := exec.Command("docker", "compose", "up", "-d")
+	cmd.Env = append(os.Environ(),
+		fmt.Sprintf("ADMIN_EMAIL=%s", ADMIN_EMAIL),
+		fmt.Sprintf("ADMIN_PASSWORD=%s", ADMIN_PASSWORD),
+	)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to run docker compose: %v", err)
+	}
+
+	fmt.Println("AlphaLab installation completed successfully!")
+	return nil
+}
+
+// verifyAlphalabStatus is a placeholder for verification logic
+func verifyAlphalabStatus() error {
+	// Placeholder for actual service verification logic
+	return nil
+}
+
+// Clear function clears the console screen based on the OS
+func Clear() {
+	switch runtime.GOOS {
+	case "windows":
+		cmd := exec.Command("cmd", "/c", "cls")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	case "linux", "darwin":
+		cmd := exec.Command("clear")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	default:
+		// Generic ANSI escape sequence for clearing screen
+		fmt.Print("\033[H\033[2J")
+	}
+}
+
+// promptEmail prompts the user for an admin email and validates it
 func promptEmail() (string, error) {
 	validate := func(input string) error {
 		if !isValidEmail(input) {
@@ -118,6 +241,7 @@ func promptEmail() (string, error) {
 	return prompt.Run()
 }
 
+// promptPassword prompts the user for an admin password with validation
 func promptPassword() (string, error) {
 	validate := func(input string) error {
 		if !isValidPassword(input) {
@@ -164,75 +288,4 @@ func promptVerifyPassword(originalPassword string) (string, error) {
 	}
 
 	return prompt.Run()
-}
-
-func checkRequirements() error {
-	_, err := exec.Command("docker", "--version").Output()
-	if err != nil {
-		return fmt.Errorf("docker is not installed, please install docker first")
-	}
-
-	_, err = exec.Command("docker", "compose", "version").Output()
-	if err != nil {
-		return fmt.Errorf("docker compose is not installed, please install docker compose first")
-	}
-
-	_, err = exec.Command("git", "--version").Output()
-	if err != nil {
-		return fmt.Errorf("git is not installed, please install git first")
-	}
-
-	return nil
-}
-
-func installAlphalab(ADMIN_EMAIL string, ADMIN_PASSWORD string) error {
-	fmt.Println("Cloning AlphaLab from GitHub...")
-	// Check Alphalab repo exits
-	_, err := exec.Command("git", "clone", repoUrl).Output()
-	if err != nil {
-		return fmt.Errorf("failed to clone AlphaLab: %v", err)
-	}
-	fmt.Println("AlphaLab cloned successfully")
-
-	// Enter folder
-	err = os.Chdir("AlphaLab")
-	if err != nil {
-		return fmt.Errorf("failed to enter AlphaLab folder: %v", err)
-	}
-
-	// Run docker compose
-	cmd := exec.Command("docker", "compose", "up", "-d")
-	cmd.Env = append(os.Environ(),
-		fmt.Sprintf("ADMIN_EMAIL=%s", ADMIN_EMAIL),
-		fmt.Sprintf("ADMIN_PASSWORD=%s", ADMIN_PASSWORD),
-	)
-
-	_, err = cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed to run docker compose: %v", err)
-	} else {
-		fmt.Println("AlphaLab is installing successfully")
-	}
-
-	return nil
-}
-
-func verifyAlphalabStatus() error {
-	// Placeholder for verification logic
-	return nil
-}
-
-func Clear() {
-	switch runtime.GOOS {
-	case "windows":
-		cmd := exec.Command("cmd", "/c", "cls")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
-	case "linux", "darwin":
-		cmd := exec.Command("clear")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
-	default:
-		fmt.Print("\033[H\033[2J")
-	}
 }
