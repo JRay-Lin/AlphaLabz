@@ -2,9 +2,11 @@
 set -e
 
 # Variables
+SYSTEM="linux_amd64"
 PB_BINARY="./pocketbase"
 PB_VERSION="0.23.4"
-PB_URL="https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/pocketbase_${PB_VERSION}_linux_amd64.zip"
+PB_URL="http://localhost:8090"
+PB_DOWNLOAD_URL="https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/pocketbase_${PB_VERSION}_${SYSTEM}.zip"
 
 # Function to wait for PocketBase to be ready
 wait_for_pocketbase() {
@@ -28,7 +30,7 @@ wait_for_pocketbase() {
 # Download PocketBase if not exists
 if [ ! -f "${PB_BINARY}" ]; then
     echo "PocketBase binary not found. Downloading..."
-    wget -q "${PB_URL}" -O pocketbase.zip
+    wget -q "${PB_DOWNLOAD_URL}" -O pocketbase.zip
     unzip pocketbase.zip
     rm pocketbase.zip
     chmod +x "${PB_BINARY}"
@@ -60,27 +62,52 @@ else
     exit 1
 fi
 
-# Create a temporary JSON file for the user creation request
-cat > create_user.json << EOL
-{
-    "email": "${ADMIN_EMAIL}",
-    "password": "${ADMIN_PASSWORD}",
-    "passwordConfirm": "${ADMIN_PASSWORD}",
-    "role": "admin"
-}
-EOL
-
-# Create the user using the PocketBase API
-echo "Creating new user..."
-curl -X POST \
+# Grant superuser token
+echo "Authenticating superuser..."
+response=$(curl -s -X POST \
     -H "Content-Type: application/json" \
-    -d @create_user.json \
-    "http://localhost:8090/api/collections/users/records"
+    -d "{
+        \"identity\": \"$SUPERUSER_EMAIL\",
+        \"password\": \"$SUPERUSER_PASSWORD\"
+    }" \
+    "http://localhost:8090/api/collections/_superusers/auth-with-password")
 
-# Clean up the temporary JSON file
-rm create_user.json
+# Extract the token from the response using jq (ensure jq is installed)
+TOKEN=$(echo "$response" | grep -o '"token":"[^"]*' | sed 's/"token":"//')
 
-echo "New user has been created."
+# Verify if token was granted successfully
+if [[ "$TOKEN" == "null" || -z "$TOKEN" ]]; then
+    echo "Failed to authenticate superuser!"
+    echo "Response: $response"
+    exit 1
+fi
+
+# Display the granted token (for debugging purposes only, avoid this in production)
+echo "Superuser token granted successfully!"
+echo "Token: $TOKEN"
+
+# Example of using the token to create a new user
+echo "Creating a new user with the granted token..."
+
+create_user_response=$(curl -s -X POST \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "{
+        \"email\": \"$SUPERUSER_EMAIL\",
+        \"password\": \"$SUPERUSER_PASSWORD\",
+        \"passwordConfirm\": \"$SUPERUSER_PASSWORD\",
+        \"role\": \"admin\"
+    }" \
+    "$PB_URL/api/collections/users/records")
+
+# Check the result of user creation
+if echo "$create_user_response" | grep -q '"code":'; then
+    echo "Failed to create a new user. Response:"
+    echo "$create_user_response"
+    exit 1
+else
+    echo "New user created successfully!"
+fi
 
 # Keep PocketBase running in the foreground
 wait $PB_PID
