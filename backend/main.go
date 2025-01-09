@@ -1,7 +1,6 @@
 package main
 
 import (
-	"elimt/pkg/pdf"
 	"elimt/pkg/pocketbase"
 	"elimt/pkg/routes"
 	"elimt/pkg/settings"
@@ -48,8 +47,14 @@ func setupRouter() *chi.Mux {
 	})
 
 	// Login to system
-	r.Post("/login", func(w http.ResponseWriter, r *http.Request) {
-		routes.HandleLogin(w, r, pbClient)
+	r.Route("/login", func(r chi.Router) {
+		r.Post("/account", func(w http.ResponseWriter, r *http.Request) {
+			routes.HandleLogin(w, r, pbClient)
+		})
+
+		r.Post("/oauth", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleOAuth(w, r, pbClient)
+		})
 	})
 
 	// Users route
@@ -171,14 +176,6 @@ func main() {
 	err = initPocketbase(pbClient, 10, 5*time.Second)
 	if err != nil {
 		log.Fatalf("Failed to initialize PocketBase client: %v", err)
-	}
-
-	//  Test pdf compress
-	err = pdf.CompressPDF("pdf_temp/test.pdf", "pdf_temp/output.pdf", "high")
-	if err != nil {
-		log.Printf("Failed to compress PDF: %v", err)
-	} else {
-		log.Println("PDF compressed successfully")
 	}
 
 	// Setup and start server
