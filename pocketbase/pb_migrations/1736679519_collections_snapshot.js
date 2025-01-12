@@ -1480,9 +1480,9 @@ migrate((app) => {
           "min": 0,
           "name": "name",
           "pattern": "",
-          "presentable": false,
+          "presentable": true,
           "primaryKey": false,
-          "required": false,
+          "required": true,
           "system": false,
           "type": "text"
         },
@@ -1514,7 +1514,9 @@ migrate((app) => {
         }
       ],
       "id": "pbc_2105053228",
-      "indexes": [],
+      "indexes": [
+        "CREATE UNIQUE INDEX `idx_5ob5C8nfwu` ON `roles` (`name`)"
+      ],
       "listRule": "@request.auth.id != \"\"",
       "name": "roles",
       "system": false,
@@ -1679,7 +1681,9 @@ migrate((app) => {
         }
       ],
       "id": "pbc_2344834334",
-      "indexes": [],
+      "indexes": [
+        "CREATE UNIQUE INDEX `idx_MNNAGVtBKX` ON `app_language` (\n  `language`,\n  `code`\n)"
+      ],
       "listRule": "@request.auth.id != \"\"",
       "name": "app_language",
       "system": false,
