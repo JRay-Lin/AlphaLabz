@@ -1,14 +1,12 @@
 #!/bin/bash
-set -e
+set -e  # Exit on error
 
 # Variables
-SYSTEM="linux_amd64"
 PB_BINARY="./pocketbase"
 PB_VERSION="0.23.4"
-PB_URL="http://localhost:8090"
-PB_DOWNLOAD_URL="https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/pocketbase_${PB_VERSION}_${SYSTEM}.zip"
+PB_URL="https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/pocketbase_${PB_VERSION}_linux_amd64.zip"
 
-# Function to wait for PocketBase to be ready
+# Function to wait for PocketBase readiness
 wait_for_pocketbase() {
     local retries=30
     local wait_time=2
@@ -24,90 +22,106 @@ wait_for_pocketbase() {
         echo "Waiting for PocketBase to start... ($retries attempts left)"
         sleep $wait_time
     done
+    echo "PocketBase did not start in time."
     return 1
 }
 
-# Download PocketBase if not exists
+# Download and prepare PocketBase if not exists
 if [ ! -f "${PB_BINARY}" ]; then
-    echo "PocketBase binary not found. Downloading..."
-    wget -q "${PB_DOWNLOAD_URL}" -O pocketbase.zip
+    echo "Downloading PocketBase binary..."
+    wget -q "${PB_URL}" -O pocketbase.zip
     unzip pocketbase.zip
     rm pocketbase.zip
     chmod +x "${PB_BINARY}"
-    echo "PocketBase downloaded and prepared."
+    echo "PocketBase downloaded and ready."
 else
-    echo "PocketBase binary already exists. Skipping download."
+    echo "PocketBase binary already present. Skipping download."
 fi
 
 # Start PocketBase in the background
 "${PB_BINARY}" serve --http=0.0.0.0:8090 &
 PB_PID=$!
 
-# Wait for PocketBase to be ready
-if ! wait_for_pocketbase; then
-    echo "Failed to start PocketBase"
-    kill $PB_PID
-    exit 1
-fi
+# Ensure PocketBase shuts down on script exit
+trap 'kill $PB_PID' EXIT
 
-# Create superuser account
-echo "Creating or updating superuser..."
+# Wait for PocketBase to be ready
+wait_for_pocketbase
+
+# Create or update superuser
 "${PB_BINARY}" superuser upsert "${ADMIN_EMAIL}" "${ADMIN_PASSWORD}"
 
-if [ $? -eq 0 ]; then
-    echo "Superuser created or updated successfully."
-else
-    echo "Failed to create or update superuser."
-    kill $PB_PID
-    exit 1
-fi
-
 # Grant superuser token
-echo "Authenticating superuser..."
-response=$(curl -s -X POST \
-    -H "Content-Type: application/json" \
-    -d "{
-        \"identity\": \"$SUPERUSER_EMAIL\",
-        \"password\": \"$SUPERUSER_PASSWORD\"
-    }" \
-    "http://localhost:8090/api/collections/_superusers/auth-with-password")
+RESPONSE=$(curl -s -X POST http://127.0.0.1:8090/api/collections/_superusers/auth-with-password \
+-H "Content-Type: application/json" \
+-d '{
+    "identity": "'"${ADMIN_EMAIL}"'",
+    "password": "'"${ADMIN_PASSWORD}"'"
+}')
+TOKEN=$(echo "$RESPONSE" | grep -o '"token":"[^"]*' | cut -d '"' -f 4)
 
-# Extract the token from the response using jq (ensure jq is installed)
-TOKEN=$(echo "$response" | grep -o '"token":"[^"]*' | sed 's/"token":"//')
-
-# Verify if token was granted successfully
-if [[ "$TOKEN" == "null" || -z "$TOKEN" ]]; then
-    echo "Failed to authenticate superuser!"
-    echo "Response: $response"
+if [ -z "$TOKEN" ]; then
+    echo "Failed to grant superuser token."
     exit 1
 fi
 
-# Display the granted token (for debugging purposes only, avoid this in production)
-echo "Superuser token granted successfully!"
-echo "Token: $TOKEN"
+echo "Superuser token granted successfully."
 
-# Example of using the token to create a new user
-echo "Creating a new user with the granted token..."
+# Call the external script to initialize tables
+bash ./init-tables.sh "$TOKEN"
 
-create_user_response=$(curl -s -X POST \
+# Fetch the latest ADMIN role ID dynamically from the roles table
+echo "Fetching latest ADMIN role ID..."
+ADMIN_ROLE_ID=$(curl -s -X GET "http://127.0.0.1:8090/api/collections/roles/records?filter=name='ADMIN'" \
+-H "Authorization: Bearer $TOKEN" | grep -o '"id":"[^"]*' | cut -d '"' -f 4)
+
+if [ -z "$ADMIN_ROLE_ID" ]; then
+    echo "Failed to fetch the ADMIN role ID from the roles table."
+    exit 1
+fi
+
+echo "Fetched ADMIN role ID: $ADMIN_ROLE_ID"
+
+# User Upsert (Check if the user exists)
+USER_EXISTS_RESPONSE=$(curl -s -X GET "http://127.0.0.1:8090/api/collections/users/records?filter=email='${ADMIN_EMAIL}'" \
+-H "Authorization: Bearer $TOKEN")
+
+USER_ID=$(echo "$USER_EXISTS_RESPONSE" | grep -o '"id":"[^"]*' | cut -d '"' -f 4)
+
+# If user exists, update; otherwise, create
+if [ -n "$USER_ID" ]; then
+    echo "User already exists. Updating user with ADMIN role."
+    USER_RESPONSE=$(curl -s -X PATCH "http://127.0.0.1:8090/api/collections/users/records/$USER_ID" \
+    -H "Content-Type: application/json" \
     -H "Authorization: Bearer $TOKEN" \
-    -H "Content-Type: application/json" \
-    -d "{
-        \"email\": \"$SUPERUSER_EMAIL\",
-        \"password\": \"$SUPERUSER_PASSWORD\",
-        \"passwordConfirm\": \"$SUPERUSER_PASSWORD\",
-        \"role\": \"admin\"
-    }" \
-    "$PB_URL/api/collections/users/records")
-
-# Check the result of user creation
-if echo "$create_user_response" | grep -q '"code":'; then
-    echo "Failed to create a new user. Response:"
-    echo "$create_user_response"
-    exit 1
+    -d '{
+        "email": "'"${ADMIN_EMAIL}"'",
+        "password": "'"${ADMIN_PASSWORD}"'",
+        "passwordConfirm": "'"${ADMIN_PASSWORD}"'",
+        "role": "'"$ADMIN_ROLE_ID"'"
+    }')
 else
-    echo "New user created successfully!"
+    echo "Creating a new user with ADMIN role."
+    USER_RESPONSE=$(curl -s -X POST "http://127.0.0.1:8090/api/collections/users/records" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $TOKEN" \
+    -d '{
+        "emailVerified": true,
+        "email": "'"${ADMIN_EMAIL}"'",
+        "password": "'"${ADMIN_PASSWORD}"'",
+        "passwordConfirm": "'"${ADMIN_PASSWORD}"'",
+        "role": "'"$ADMIN_ROLE_ID"'"
+    }')
 fi
 
-# Keep PocketBase running in the foreground
+# Confirm successful user creation
+if echo "$USER_RESPONSE" | grep -q '"id":"'; then
+    echo "User created or updated successfully with ADMIN role."
+else
+    echo "Failed to create/update user."
+    echo "$USER_RESPONSE"
+    exit 1
+fi
+
+echo "Setup completed successfully. PocketBase is running with roles and users created."
 wait $PB_PID
