@@ -1,7 +1,7 @@
-package routes
+package login
 
 import (
-	"elimt/pkg/pocketbase"
+	"alphalabz/pkg/pocketbase"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -31,7 +31,7 @@ type LoginRequest struct {
 // ❌ Error Responses:
 //   - 400 Bad Request → Invalid JSON or missing fields
 //   - 500 Internal Server Error → Server issue
-func HandleLogin(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.PocketBaseClient) {
+func HandleAccountLogin(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.PocketBaseClient) {
 	var loginData LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&loginData); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)

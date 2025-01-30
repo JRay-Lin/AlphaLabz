@@ -1,9 +1,10 @@
 package main
 
 import (
-	"elimt/pkg/pocketbase"
-	"elimt/pkg/routes"
-	"elimt/pkg/settings"
+	"alphalabz/pkg/pocketbase"
+	"alphalabz/pkg/routes/login"
+	"alphalabz/pkg/routes/user"
+	"alphalabz/pkg/settings"
 	"fmt"
 	"log"
 	"net/http"
@@ -49,7 +50,7 @@ func setupRouter() *chi.Mux {
 	// Login to system
 	r.Route("/login", func(r chi.Router) {
 		r.Post("/account", func(w http.ResponseWriter, r *http.Request) {
-			routes.HandleLogin(w, r, pbClient)
+			login.HandleAccountLogin(w, r, pbClient)
 		})
 
 		r.Post("/oauth", func(w http.ResponseWriter, r *http.Request) {
@@ -64,11 +65,11 @@ func setupRouter() *chi.Mux {
 	// Users route
 	r.Route("/users", func(r chi.Router) {
 		r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
-			routes.HandleUserList(w, r, pbClient)
+			user.HandleUserList(w, r, pbClient)
 		})
 
 		r.Post("/register", func(w http.ResponseWriter, r *http.Request) {
-			routes.HandleRegister(w, r, pbClient)
+			user.HandleRegister(w, r, pbClient)
 		})
 
 		r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {

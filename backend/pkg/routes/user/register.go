@@ -1,7 +1,7 @@
-package routes
+package user
 
 import (
-	"elimt/pkg/pocketbase"
+	"alphalabz/pkg/pocketbase"
 	"encoding/json"
 	"net/http"
 	"strings"
