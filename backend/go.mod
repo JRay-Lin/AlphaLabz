@@ -1,4 +1,4 @@
-module elimt
+module alphalabz
 
 go 1.23.0
 
