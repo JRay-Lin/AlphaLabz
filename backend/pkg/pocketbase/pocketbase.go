@@ -44,7 +44,7 @@ func NewPocketBaseClient(baseURL string) *PocketBaseClient {
 }
 
 // RegisterUser registers a new user in the "users" collection
-func (p *PocketBaseClient) RegisterUser(email, password, role string) error {
+func (p *PocketBaseClient) RegisterUser(email string, password string, role string, authToken string) error {
 	url := fmt.Sprintf("%s/api/collections/users/records", p.BaseURL)
 
 	// Data payload for the new user
@@ -60,13 +60,25 @@ func (p *PocketBaseClient) RegisterUser(email, password, role string) error {
 		return fmt.Errorf("failed to marshal data: %w", err)
 	}
 
-	// HTTP POST request
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(body))
+	// Create a new HTTP request
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Set request headers
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", authToken)
+
+	// Execute the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to create user: %w", err)
 	}
 	defer resp.Body.Close()
 
+	// Check response status
 	if resp.StatusCode != http.StatusOK {
 		return errors.New("failed to register user: non-200 status code")
 	}

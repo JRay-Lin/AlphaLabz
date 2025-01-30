@@ -585,7 +585,7 @@ migrate((app) => {
         "body": "<p>Hello,</p>\n<p>Click on the button below to confirm your new email address.</p>\n<p>\n  <a class=\"btn\" href=\"{APP_URL}/_/#/auth/confirm-email-change/{TOKEN}\" target=\"_blank\" rel=\"noopener\">Confirm new email</a>\n</p>\n<p><i>If you didn't ask to change your email address, you can ignore this email.</i></p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>",
         "subject": "Confirm your {APP_NAME} new email address"
       },
-      "createRule": "@request.auth.id != \"\" && @request.auth.role != \"user\"",
+      "createRule": "@request.auth.id != \"\" && (@request.auth.role.name = \"MODERATOR\" || @request.auth.role.name = \"ADMIN\")",
       "deleteRule": "@request.auth.id != \"\" && @request.auth.role != \"user\"",
       "emailChangeToken": {
         "duration": 1800
@@ -1517,12 +1517,12 @@ migrate((app) => {
       "indexes": [
         "CREATE UNIQUE INDEX `idx_5ob5C8nfwu` ON `roles` (`name`)"
       ],
-      "listRule": "@request.auth.id != \"\"",
+      "listRule": "",
       "name": "roles",
       "system": false,
       "type": "base",
       "updateRule": "@request.auth.id != \"\" && @request.auth.role = \"admin\"",
-      "viewRule": "@request.auth.id != \"\" "
+      "viewRule": ""
     },
     {
       "createRule": "@request.auth.id = user_id.user_settings_via_user_id.user_id",

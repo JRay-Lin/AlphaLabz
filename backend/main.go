@@ -55,6 +55,10 @@ func setupRouter() *chi.Mux {
 		r.Post("/oauth", func(w http.ResponseWriter, r *http.Request) {
 			// routes.HandleOAuth(w, r, pbClient)
 		})
+
+		r.Post("/sso", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleSSO(w, r, pbClient)
+		})
 	})
 
 	// Users route
