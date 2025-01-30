@@ -18,6 +18,7 @@ type roleResponse struct {
 	Items []Role `json:"items"` // Extract the "items" array from response
 }
 
+// Get all available roles in the database
 func (p *PocketBaseClient) GetAvailableRoles() ([]Role, error) {
 	url := fmt.Sprintf("%s/api/collections/roles/records", p.BaseURL)
 
@@ -50,5 +51,5 @@ func (p *PocketBaseClient) GetAvailableRoles() ([]Role, error) {
 		return nil, fmt.Errorf("failed to parse response JSON: %w", err)
 	}
 
-	return result.Items, nil // Extract only the "items" array
+	return result.Items, nil
 }
