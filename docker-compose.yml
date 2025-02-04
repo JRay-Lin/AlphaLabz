@@ -2,7 +2,7 @@ services:
   database:
     container_name: alphalabz-database
     build:
-      context: ./pocketbase
+      context: ./database
       dockerfile: Dockerfile.pb
     ports:
       - "8090:8090"
@@ -29,7 +29,7 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      pocketbase:
+      database:
         condition: service_healthy
     environment:
       - POCKETBASE_URL=http://pocketbase:8090
