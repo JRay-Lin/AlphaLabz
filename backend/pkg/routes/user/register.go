@@ -43,6 +43,13 @@ type RegisterRequest struct {
 //   - 500 Internal Server Error → Server issue
 func HandleRegister(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.PocketBaseClient) {
 	var registerData RegisterRequest
+
+	// Check if the request method is POST
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	// Get request header
 	authToken := r.Header.Get("Authorization")
 	if authToken == "" {
