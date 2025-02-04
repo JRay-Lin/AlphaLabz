@@ -5,6 +5,7 @@ import (
 	"alphalabz/pkg/routes/login"
 	"alphalabz/pkg/routes/user"
 	"alphalabz/pkg/settings"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -43,8 +44,17 @@ func setupRouter() *chi.Mux {
 
 	// Health check
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Server is healthy"))
 		log.Println("Server is healthy")
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		// Corrected JSON encoding
+		response := map[string]string{"message": "server is healthy"}
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+			return
+		}
 	})
 
 	// Login to system
@@ -70,6 +80,10 @@ func setupRouter() *chi.Mux {
 
 		r.Post("/register", func(w http.ResponseWriter, r *http.Request) {
 			user.HandleRegister(w, r, pbClient)
+		})
+
+		r.Post("/invite", func(w http.ResponseWriter, r *http.Request) {
+			user.HandleInviteNewUser(w, r)
 		})
 
 		r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {

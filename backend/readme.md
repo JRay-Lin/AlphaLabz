@@ -81,7 +81,7 @@ This API provides authentication, user management, lab book handling, scheduling
     }
     ```
 -   ❌ **Errors**:
-    -   `401 Unauthorized` → Missing token.
+    -   `401 Unauthorized` → Missing or invalid token.
 
 ### `POST /users/register`
 
