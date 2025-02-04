@@ -5,3 +5,9 @@
 /mailserver
 
 elimt-cli-mac
+database/pb_data/data.db-shm
+database/pb_data/data.db-wal
+database/pb_data/auxiliary.db-wal
+database/pb_data/auxiliary.db-shm
+database/pb_data/auxiliary.db
+database/pb_data/data.db
