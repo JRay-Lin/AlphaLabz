@@ -2,9 +2,9 @@ package login
 
 import (
 	"alphalabz/pkg/pocketbase"
+	"alphalabz/pkg/tools"
 	"encoding/json"
 	"net/http"
-	"time"
 )
 
 type LoginRequest struct {
@@ -44,13 +44,10 @@ func HandleAccountLogin(w http.ResponseWriter, r *http.Request, pbClient *pocket
 		return
 	}
 
-	timestamp := time.Now().Unix()
-	formattedTime := time.Unix(timestamp, 0).Format("2006-01-02 15:04:05")
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":    "success",
 		"token":     token,
-		"timestamp": formattedTime,
+		"timestamp": tools.Timestamp(),
 	})
 }
