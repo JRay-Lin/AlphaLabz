@@ -38,7 +38,7 @@ func (p *PocketBaseClient) ListUsers(token string) (userList []User, totalUsers 
 	}
 
 	// Add Authorization header
-	req.Header.Add("Authorization", token)
+	req.Header.Add("Authorization", "Bearer "+token)
 
 	// Make the request using http.Client
 	client := &http.Client{}
