@@ -2,6 +2,7 @@ package user
 
 import (
 	"alphalabz/pkg/pocketbase"
+	"alphalabz/pkg/tools"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -50,10 +51,10 @@ func HandleRegister(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 		return
 	}
 
-	// Get request header
-	authToken := r.Header.Get("Authorization")
-	if authToken == "" {
-		http.Error(w, "Authorization header is missing", http.StatusUnauthorized)
+	// Get auth token
+	rawToken, err := tools.TokenExtractor(r.Header.Get("Authorization"))
+	if err != nil {
+		http.Error(w, "Missing or invalid Authorization token", http.StatusUnauthorized)
 		return
 	}
 
@@ -91,7 +92,7 @@ func HandleRegister(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 		}
 	}
 
-	err = pbClient.RegisterUser(registerData.Email, registerData.Password, roleId, authToken)
+	err = pbClient.RegistUser(registerData.Email, registerData.Password, roleId, rawToken)
 	if err != nil {
 		http.Error(w, "Registration failed", http.StatusInternalServerError)
 		return

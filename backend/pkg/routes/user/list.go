@@ -2,6 +2,7 @@ package user
 
 import (
 	"alphalabz/pkg/pocketbase"
+	"alphalabz/pkg/tools"
 	"encoding/json"
 	"net/http"
 )
@@ -49,17 +50,14 @@ func HandleUserList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 	}
 
 	// Get token from request header
-	token := r.Header.Get("Authorization")
-
-	// Remove "Bearer " prefix from token
-	rawToken := token[len("Bearer"):]
-	if rawToken == "" {
-		http.Error(w, "Missing Authorization token", http.StatusUnauthorized)
+	rawToken, err := tools.TokenExtractor(r.Header.Get("Authorization"))
+	if err != nil {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
 
 	// Fetch users from PocketBase
-	users, totalUsers, err := pbClient.ListUsers(token)
+	users, totalUsers, err := pbClient.ListUsers(rawToken)
 	if err != nil {
 		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
 		return
