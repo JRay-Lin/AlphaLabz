@@ -1,13 +1,40 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"strings"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 )
+
+func verifyToken(header string, app *pocketbase.PocketBase) error {
+	if header == "" {
+		return fmt.Errorf("Unauthorized")
+	}
+
+	if strings.HasPrefix(header, "Bearer ") {
+		requesterToken := strings.TrimSpace(header[7:]) // Trim spaces for safety
+		if requesterToken == "" {
+			return fmt.Errorf("Unauthorized")
+		}
+
+		requester, err := app.FindAuthRecordByToken(requesterToken, core.TokenTypeAuth)
+		if err != nil {
+			return fmt.Errorf("Unauthorized")
+		}
+
+		if requester.Collection().Name != "users" {
+			return fmt.Errorf("Unauthorized")
+		}
+	}
+
+	return nil
+}
 
 func main() {
 	app := pocketbase.New()
