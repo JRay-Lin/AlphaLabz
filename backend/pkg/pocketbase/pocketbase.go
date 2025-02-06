@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 )
@@ -14,32 +15,8 @@ type PocketBaseClient struct {
 	SuperToken string
 }
 
-// Check pocketbase connection is working
-func (p *PocketBaseClient) CheckConnection() error {
-	url := fmt.Sprintf("%s/api/health", p.BaseURL)
-
-	// Create a new HTTP client with timeout
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
-
-	// Make GET request to health endpoint
-	resp, err := client.Get(url)
-	if err != nil {
-		return fmt.Errorf("failed to connect to PocketBase: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Check if status code is OK (200)
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("PocketBase health check failed with status: %d", resp.StatusCode)
-	}
-
-	return nil
-}
-
-// NewPocketBaseClient initializes a new PocketBase client and authenticates the superuser
-func NewPocketBaseClient(baseURL, superuserEmail, superuserPassword string) (*PocketBaseClient, error) {
+// NewPocketBase initializes a new PocketBase client, authenticates, and verifies the connection.
+func NewPocketBase(baseURL, superuserEmail, superuserPassword string, maxRetries int, retryInterval time.Duration) (*PocketBaseClient, error) {
 	client := &PocketBaseClient{BaseURL: baseURL}
 
 	// Authenticate superuser and store the token
@@ -47,9 +24,20 @@ func NewPocketBaseClient(baseURL, superuserEmail, superuserPassword string) (*Po
 	if err != nil {
 		return nil, fmt.Errorf("failed to authenticate superuser: %w", err)
 	}
-
 	client.SuperToken = token
-	return client, nil
+
+	// Verify PocketBase connection with retries
+	for i := 0; i < maxRetries; i++ {
+		err := client.CheckConnection()
+		if err == nil {
+			log.Println("Successfully connected to PocketBase")
+			return client, nil
+		}
+		log.Printf("Failed to connect to PocketBase, attempt %d/%d. Retrying in %s...", i+1, maxRetries, retryInterval)
+		time.Sleep(retryInterval)
+	}
+
+	return nil, fmt.Errorf("failed to connect to PocketBase after %d attempts", maxRetries)
 }
 
 // authenticateSuperuser logs in the superuser and retrieves the authentication token
@@ -96,4 +84,28 @@ func (p *PocketBaseClient) authenticateSuperuser(email, password string) (string
 	}
 
 	return respData.Token, nil
+}
+
+// Check pocketbase connection is working
+func (p *PocketBaseClient) CheckConnection() error {
+	url := fmt.Sprintf("%s/api/health", p.BaseURL)
+
+	// Create a new HTTP client with timeout
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	// Make GET request to health endpoint
+	resp, err := client.Get(url)
+	if err != nil {
+		return fmt.Errorf("failed to connect to PocketBase: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check if status code is OK (200)
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("PocketBase health check failed with status: %d", resp.StatusCode)
+	}
+
+	return nil
 }

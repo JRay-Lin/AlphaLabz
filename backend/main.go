@@ -17,19 +17,7 @@ import (
 )
 
 var pbClient *pocketbase.PocketBaseClient
-
-func initPocketbase(pbClient *pocketbase.PocketBaseClient, maxRetries int, retryInterval time.Duration) error {
-	for i := 0; i < maxRetries; i++ {
-		err := pbClient.CheckConnection()
-		if err == nil {
-			log.Println("Successfully connected to PocketBase")
-			return nil
-		}
-		log.Printf("Failed to connect to PocketBase, attempt %d/%d. Retrying in %s...", i+1, maxRetries, retryInterval)
-		time.Sleep(retryInterval)
-	}
-	return fmt.Errorf("failed to connect to PocketBase after %d attempts", maxRetries)
-}
+var casbinEnforcer *casbin.CasbinEnforcer
 
 func setupRouter() *chi.Mux {
 	r := chi.NewRouter()
@@ -197,13 +185,13 @@ func main() {
 		log.Fatal("Missing required environment variables: ADMIN_EMAIL and ADMIN_PASSWORD")
 	}
 
-	pbClient, err = pocketbase.NewPocketBaseClient(pbHost, adminEmail, adminPassword)
+	pbClient, err = pocketbase.NewPocketBase(pbHost, adminEmail, adminPassword, 10, 5*time.Second)
 	if err != nil {
 		log.Fatalf("Failed to initialize PocketBase client: %v", err)
 	}
 
-	// Verify PocketBase connection with retries
-	err = initPocketbase(pbClient, 10, 5*time.Second)
+	// Initialize Casbin RBAC
+	casbinEnforcer, err := casbin.InitializeCasbin(pbClient)
 	if err != nil {
 		log.Fatalf("Failed to initialize PocketBase client after retries: %v", err)
 	}
