@@ -197,6 +197,11 @@ func main() {
 		log.Fatal("Missing required environment variables: ADMIN_EMAIL and ADMIN_PASSWORD")
 	}
 
+	pbClient, err = pocketbase.NewPocketBaseClient(pbHost, adminEmail, adminPassword)
+	if err != nil {
+		log.Fatalf("Failed to initialize PocketBase client: %v", err)
+	}
+
 	// Verify PocketBase connection with retries
 	err = initPocketbase(pbClient, 10, 5*time.Second)
 	if err != nil {
