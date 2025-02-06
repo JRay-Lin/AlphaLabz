@@ -11,7 +11,9 @@ import (
 type VerifiedResult struct {
 	Valid  bool   `json:"valid"`
 	UserID string `json:"userId,omitempty"`
+	Role   string `json:"role,omitempty"`
 	Name   string `json:"name,omitempty"`
+	Email  string `json:"email,omitempty"`
 }
 
 type pbRespond struct {
@@ -68,6 +70,7 @@ func (p *PocketBaseClient) VerifyToken(token string) (VerifiedResult, error) {
 	return VerifiedResult{
 		Valid:  true,
 		UserID: pbRes.Record.Id,
+		Role:   pbRes.Record.Role,
 		Name:   pbRes.Record.Name,
 	}, nil
 }
