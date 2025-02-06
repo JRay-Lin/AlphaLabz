@@ -190,11 +190,17 @@ func main() {
 		pbHost = "http://localhost:8090"
 	}
 
-	pbClient = pocketbase.NewPocketBaseClient(pbHost)
+	adminEmail := os.Getenv("ADMIN_EMAIL")
+	adminPassword := os.Getenv("ADMIN_PASSWORD")
 
+	if adminEmail == "" || adminPassword == "" {
+		log.Fatal("Missing required environment variables: ADMIN_EMAIL and ADMIN_PASSWORD")
+	}
+
+	// Verify PocketBase connection with retries
 	err = initPocketbase(pbClient, 10, 5*time.Second)
 	if err != nil {
-		log.Fatalf("Failed to initialize PocketBase client: %v", err)
+		log.Fatalf("Failed to initialize PocketBase client after retries: %v", err)
 	}
 
 	// Setup and start server
