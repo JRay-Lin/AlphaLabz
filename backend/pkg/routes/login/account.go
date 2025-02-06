@@ -38,7 +38,7 @@ func HandleAccountLogin(w http.ResponseWriter, r *http.Request, pbClient *pocket
 		return
 	}
 
-	token, err := pbClient.AuthenticateUser(loginData.Email, loginData.Password)
+	token, err := pbClient.AuthUserWithPassword(loginData.Email, loginData.Password)
 	if err != nil {
 		http.Error(w, "Authentication failed", http.StatusUnauthorized)
 		return
