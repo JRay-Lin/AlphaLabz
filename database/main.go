@@ -12,23 +12,29 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
-func verifyToken(header string, app *pocketbase.PocketBase) error {
+type userRole struct {
+	Name string `json:"name"`
+	Role string `json:"role"`
+}
+
+// verifyRequester ensure only superuser can access the endpoints
+func verifyRequester(header string, app *pocketbase.PocketBase) error {
 	if header == "" {
-		return fmt.Errorf("Unauthorized")
+		return fmt.Errorf("unauthorized, missing header")
 	}
 
 	if strings.HasPrefix(header, "Bearer ") {
 		requesterToken := strings.TrimSpace(header[7:]) // Trim spaces for safety
 		if requesterToken == "" {
-			return fmt.Errorf("Unauthorized")
+			return fmt.Errorf("unauthorized, missing token")
 		}
 
 		requester, err := app.FindAuthRecordByToken(requesterToken, core.TokenTypeAuth)
 		if err != nil {
-			return fmt.Errorf("Unauthorized")
+			return fmt.Errorf("unauthorized, can't find user")
 		}
 
-		if requester.Collection().Name != "users" {
+		if requester.Collection().Name != "_superusers" {
 			return fmt.Errorf("Unauthorized")
 		}
 	}
@@ -43,20 +49,20 @@ func main() {
 		// serves static files from the provided public dir (if exists)
 		se.Router.GET("/{path...}", apis.Static(os.DirFS("./pb_public"), false))
 
-		// Return user's permission
-		se.Router.GET("/api/permissions/{token}", func(e *core.RequestEvent) error {
+		// Return user's role
+		se.Router.GET("/api/role/{token}", func(e *core.RequestEvent) error {
 			// Hanlde requester permission
-			if err := verifyToken(e.Request.Header.Get("Authorization"), app); err != nil {
-				return e.String(http.StatusUnauthorized, "Unauthorized")
+			if err := verifyRequester(e.Request.Header.Get("Authorization"), app); err != nil {
+				return e.String(http.StatusUnauthorized, err.Error())
 			}
 
 			// Grant token from parameter
 			token := e.Request.PathValue("token")
 			user, err := app.FindAuthRecordByToken(token, core.TokenTypeAuth)
 			if err != nil {
-				return e.String(http.StatusUnauthorized, "Unauthorized")
+				return e.String(http.StatusUnauthorized, "Unauthorized 2")
 			} else if user.Collection().Name != "users" {
-				return e.String(http.StatusForbidden, "Unauthorized")
+				return e.String(http.StatusForbidden, "Unauthorized 3")
 			}
 
 			userRecord, err := app.FindRecordById("users", user.Id)
@@ -64,14 +70,7 @@ func main() {
 				return e.String(http.StatusInternalServerError, "Internal Server error")
 			}
 
-			fmt.Printf("User permission record: %v\n", userRecord.GetString("permissions"))
-
-			userPermissions, err := app.FindRecordById("permissions", userRecord.GetString("permissions"))
-			if err != nil {
-				return e.String(http.StatusInternalServerError, "Internal Server error")
-			}
-
-			return e.String(200, userPermissions.GetString("permissions"))
+			return e.JSON(http.StatusOK, map[string]any{"name": userRecord.GetString("name"), "role": userRecord.GetString("role")})
 		})
 
 		return se.Next()
