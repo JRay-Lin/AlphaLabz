@@ -92,7 +92,7 @@ func HandleRegister(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 		}
 	}
 
-	err = pbClient.RegistUser(registerData.Email, registerData.Password, roleId, rawToken)
+	err = pbClient.NewUser(registerData.Email, registerData.Password, roleId, rawToken)
 	if err != nil {
 		http.Error(w, "Registration failed", http.StatusInternalServerError)
 		return
