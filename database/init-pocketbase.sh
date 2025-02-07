@@ -76,8 +76,12 @@ if [ -n "$USER_ID" ]; then
         "email": "'"${ADMIN_EMAIL}"'",
         "password": "'"${ADMIN_PASSWORD}"'",
         "passwordConfirm": "'"${ADMIN_PASSWORD}"'",
+        "emailVisibility": "'"true"'",
+        "verified": "'"true"'",
         "role": "'"0001"'",
-        "permission": "'"admin001"'"
+        "role": "'"0001"'",
+        "name": "'"admin"'",
+        "user_settings": "'"0001"'"
     }')
 else
     echo "Creating a new user with ADMIN role."
@@ -85,12 +89,14 @@ else
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer $TOKEN" \
     -d '{
-        "emailVerified": true,
         "email": "'"${ADMIN_EMAIL}"'",
         "password": "'"${ADMIN_PASSWORD}"'",
         "passwordConfirm": "'"${ADMIN_PASSWORD}"'",
+        "emailVisibility": "'"true"'",
+        "verified": "'"true"'",
         "role": "'"0001"'",
-        "permission": "'"admin001"'"
+        "name": "'"admin"'",
+        "user_settings": "'"0001"'"
     }')
 fi
 
