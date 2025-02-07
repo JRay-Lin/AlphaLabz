@@ -11,8 +11,8 @@ type UserRole struct {
 	RoleId string `json:"role"`
 }
 
-func (p *PocketBaseClient) FetchUserRole(userJwt string) (UserRole, error) {
-	url := fmt.Sprintf("%s/api/role/%s", p.BaseURL, userJwt)
+func (pbClient *PocketBaseClient) FetchUserRole(userJwt string) (UserRole, error) {
+	url := fmt.Sprintf("%s/api/role/%s", pbClient.BaseURL, userJwt)
 
 	// Create request
 	req, err := http.NewRequest("GET", url, nil)
@@ -21,11 +21,10 @@ func (p *PocketBaseClient) FetchUserRole(userJwt string) (UserRole, error) {
 	}
 
 	// Add autorization header
-	req.Header.Set("Authorization", "Bearer "+p.SuperToken)
+	req.Header.Set("Authorization", "Bearer "+pbClient.SuperToken)
 
 	// Send request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := pbClient.HTTPClient.Do(req)
 	if err != nil {
 		return UserRole{}, err
 	}

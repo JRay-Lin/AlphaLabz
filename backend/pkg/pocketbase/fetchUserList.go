@@ -38,11 +38,9 @@ func (p *PocketBaseClient) ListUsers(token string) (userList []User, totalUsers 
 	}
 
 	// Add Authorization header
-	req.Header.Add("Authorization", "Bearer "+token)
+	req.Header.Add("Authorization", "Bearer "+pbClient.SuperToken)
 
-	// Make the request using http.Client
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := pbClient.HTTPClient.Do(req)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to fetch users: %w", err)
 	}

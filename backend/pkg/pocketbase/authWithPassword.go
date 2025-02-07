@@ -9,8 +9,8 @@ import (
 )
 
 // AuthenticateUser authenticates a user and returns their token
-func (p *PocketBaseClient) AuthUserWithPassword(email, password string) (string, error) {
-	url := fmt.Sprintf("%s/api/collections/users/auth-with-password", p.BaseURL)
+func (pbClient *PocketBaseClient) AuthUserWithPassword(email, password string) (string, error) {
+	url := fmt.Sprintf("%s/api/collections/users/auth-with-password", pbClient.BaseURL)
 
 	// Data payload for authentication
 	data := map[string]interface{}{
@@ -23,12 +23,17 @@ func (p *PocketBaseClient) AuthUserWithPassword(email, password string) (string,
 		return "", fmt.Errorf("failed to marshal data: %w", err)
 	}
 
-	// HTTP POST request
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := pbClient.HTTPClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to authenticate user: %w", err)
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", errors.New("failed to authenticate user: non-200 status code")

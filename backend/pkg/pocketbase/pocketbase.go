@@ -13,17 +13,21 @@ import (
 type PocketBaseClient struct {
 	BaseURL    string
 	SuperToken string
+	HTTPClient *http.Client
 }
 
 // NewPocketBase initializes a new PocketBase client, authenticates, and verifies the connection.
 func NewPocketBase(baseURL, superuserEmail, superuserPassword string, maxRetries int, retryInterval time.Duration) (*PocketBaseClient, error) {
-	client := &PocketBaseClient{BaseURL: baseURL}
+	client := &PocketBaseClient{
+		BaseURL:    baseURL,
+		HTTPClient: &http.Client{Timeout: 10 * time.Second}}
 
 	// Authenticate superuser and store the token
 	token, err := client.authenticateSuperuser(superuserEmail, superuserPassword)
 	if err != nil {
 		return nil, fmt.Errorf("failed to authenticate superuser: %w", err)
 	}
+	log.Println("Successfully authenticated superuser")
 	client.SuperToken = token
 
 	// Verify PocketBase connection with retries
@@ -41,8 +45,8 @@ func NewPocketBase(baseURL, superuserEmail, superuserPassword string, maxRetries
 }
 
 // authenticateSuperuser logs in the superuser and retrieves the authentication token
-func (p *PocketBaseClient) authenticateSuperuser(email, password string) (string, error) {
-	url := fmt.Sprintf("%s/api/collections/_superusers/auth-with-password", p.BaseURL)
+func (pbClient *PocketBaseClient) authenticateSuperuser(email, password string) (string, error) {
+	url := fmt.Sprintf("%s/api/collections/_superusers/auth-with-password", pbClient.BaseURL)
 
 	// Data payload for authentication
 	data := map[string]interface{}{
@@ -63,8 +67,7 @@ func (p *PocketBaseClient) authenticateSuperuser(email, password string) (string
 	req.Header.Set("Content-Type", "application/json")
 
 	// Execute request
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := pbClient.HTTPClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to authenticate superuser: %w", err)
 	}

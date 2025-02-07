@@ -19,16 +19,15 @@ type roleResponse struct {
 }
 
 // Get all available roles in the database
-func (p *PocketBaseClient) GetAvailableRoles() ([]Role, error) {
-	url := fmt.Sprintf("%s/api/collections/roles/records", p.BaseURL)
+func (pbClient *PocketBaseClient) GetAvailableRoles() ([]Role, error) {
+	url := fmt.Sprintf("%s/api/collections/roles/records", pbClient.BaseURL)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := pbClient.HTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
