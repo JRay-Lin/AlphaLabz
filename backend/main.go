@@ -1,12 +1,13 @@
 package main
 
 import (
+	"alphalabz/pkg/casbin"
 	"alphalabz/pkg/pocketbase"
+	"alphalabz/pkg/routes"
 	"alphalabz/pkg/routes/login"
 	"alphalabz/pkg/routes/user"
 	"alphalabz/pkg/settings"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -45,6 +46,10 @@ func setupRouter() *chi.Mux {
 		}
 	})
 
+	r.Post("/test", func(w http.ResponseWriter, r *http.Request) {
+		routes.TestHandler(w, r, pbClient, casbinEnforcer)
+	})
+
 	// Login to system
 	r.Route("/login", func(r chi.Router) {
 		r.Post("/account", func(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +68,7 @@ func setupRouter() *chi.Mux {
 	// Users route
 	r.Route("/users", func(r chi.Router) {
 		r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
-			user.HandleUserList(w, r, pbClient)
+			user.HandleUserList(w, r, pbClient, casbinEnforcer)
 		})
 
 		r.Post("/register", func(w http.ResponseWriter, r *http.Request) {
@@ -190,11 +195,19 @@ func main() {
 		log.Fatalf("Failed to initialize PocketBase client: %v", err)
 	}
 
-	// Initialize Casbin RBAC
-	casbinEnforcer, err := casbin.InitializeCasbin(pbClient)
+	policies, err := casbin.FetchPermissions(pbClient)
 	if err != nil {
-		log.Fatalf("Failed to initialize PocketBase client after retries: %v", err)
+		log.Fatalf("Failed to fetch policies: %v", err)
 	}
+
+	casbinEnforcer, err = casbin.InitializeCasbin(policies)
+	if err != nil {
+		log.Fatalf("Failed to initialize Casbin: %v", err)
+	}
+
+	casbinEnforcer.StartPolicyAutoReload(pbClient, 10*time.Minute)
+
+	// fmt.Println(pbClient.SuperToken)
 
 	// Setup and start server
 	r := setupRouter()
