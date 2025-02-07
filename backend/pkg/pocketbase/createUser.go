@@ -9,8 +9,8 @@ import (
 )
 
 // RegisterUser registers a new user in the "users" collection
-func (p *PocketBaseClient) RegistUser(email string, password string, role string, token string) error {
-	url := fmt.Sprintf("%s/api/collections/users/records", p.BaseURL)
+func (pbClient *PocketBaseClient) NewUser(email string, password string, role string, token string) error {
+	url := fmt.Sprintf("%s/api/collections/users/records", pbClient.BaseURL)
 
 	// Data payload for the new user
 	data := map[string]interface{}{
@@ -36,8 +36,7 @@ func (p *PocketBaseClient) RegistUser(email string, password string, role string
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	// Execute the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := pbClient.HTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to create user: %w", err)
 	}
