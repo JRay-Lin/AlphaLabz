@@ -41,9 +41,7 @@ func (pbClient *PocketBaseClient) ListUsers(fields []string) (userList []User, t
 	url := fmt.Sprintf("%s/api/collections/users/records?expand=role&", pbClient.BaseURL)
 
 	// Add fields as query parameters if specified
-	if len(fields) > 0 {
-		url += "&fields=" + strings.Join(fields, ",")
-	}
+	url += "&fields=" + strings.Join(fields, ",")
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -65,11 +63,11 @@ func (pbClient *PocketBaseClient) ListUsers(fields []string) (userList []User, t
 	}
 
 	// Parse response
-	var UserListResponse ListUsersResponse
-	err = json.NewDecoder(resp.Body).Decode(&UserListResponse)
+	var userListResp ListUsersResponse
+	err = json.NewDecoder(resp.Body).Decode(&userListResp)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return UserListResponse.Items, UserListResponse.TotalItems, nil
+	return userListResp.Items, userListResp.TotalItems, nil
 }
