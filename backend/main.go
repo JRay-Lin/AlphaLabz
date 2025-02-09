@@ -71,9 +71,10 @@ func setupRouter() *chi.Mux {
 			user.HandleUserList(w, r, pbClient, casbinEnforcer)
 		})
 
-		r.Post("/register", func(w http.ResponseWriter, r *http.Request) {
-			user.HandleRegister(w, r, pbClient)
-		})
+		// !!! Deprecated !!!
+		// r.Post("/register", func(w http.ResponseWriter, r *http.Request) {
+		// 	user.HandleRegister(w, r, pbClient)
+		// })
 
 		r.Post("/invite", func(w http.ResponseWriter, r *http.Request) {
 			user.HandleInviteNewUser(w, r)
