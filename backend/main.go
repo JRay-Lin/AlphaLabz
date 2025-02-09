@@ -3,8 +3,8 @@ package main
 import (
 	"alphalabz/pkg/casbin"
 	"alphalabz/pkg/pocketbase"
-	"alphalabz/pkg/routes"
 	"alphalabz/pkg/routes/login"
+	"alphalabz/pkg/routes/role"
 	"alphalabz/pkg/routes/user"
 	"alphalabz/pkg/settings"
 	"encoding/json"
@@ -46,10 +46,6 @@ func setupRouter() *chi.Mux {
 		}
 	})
 
-	r.Post("/test", func(w http.ResponseWriter, r *http.Request) {
-		routes.TestHandler(w, r, pbClient, casbinEnforcer)
-	})
-
 	// Login to system
 	r.Route("/login", func(r chi.Router) {
 		r.Post("/account", func(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +73,7 @@ func setupRouter() *chi.Mux {
 		// })
 
 		r.Post("/invite", func(w http.ResponseWriter, r *http.Request) {
-			user.HandleInviteNewUser(w, r)
+			user.HandleInviteNewUser(w, r, settings.Mailer)
 		})
 
 		r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
@@ -153,20 +149,11 @@ func setupRouter() *chi.Mux {
 		r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
 			// routes.HandleScheduleUpdate(w, r, pbClient)
 		})
+	})
 
-		r.Route("/tags", func(r chi.Router) {
-			r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
-				// routes.HandleScheduleList(w, r, pbClient)
-			})
-			r.Post("/create", func(w http.ResponseWriter, r *http.Request) {
-				// routes.HandleScheduleCreate(w, r, pbClient)
-			})
-			r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
-				// routes.HandleScheduleRemove(w, r, pbClient)
-			})
-			r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
-				// routes.HandleScheduleUpdate(w, r, pbClient)
-			})
+	r.Route("/roles", func(r chi.Router) {
+		r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
+			role.HandleRoleList(w, r, pbClient, casbinEnforcer)
 		})
 	})
 
@@ -177,6 +164,8 @@ func main() {
 	settings, err := settings.LoadSettings("settings.yml")
 	if err != nil {
 		log.Fatal(err)
+	} else {
+		log.Println("Settings loaded successfully")
 	}
 
 	pbHost := os.Getenv("POCKETBASE_URL")
@@ -184,9 +173,9 @@ func main() {
 		pbHost = "http://localhost:8090"
 	}
 
+	// Get admin password from env
 	adminEmail := os.Getenv("ADMIN_EMAIL")
 	adminPassword := os.Getenv("ADMIN_PASSWORD")
-
 	if adminEmail == "" || adminPassword == "" {
 		log.Fatal("Missing required environment variables: ADMIN_EMAIL and ADMIN_PASSWORD")
 	}
@@ -206,9 +195,7 @@ func main() {
 		log.Fatalf("Failed to initialize Casbin: %v", err)
 	}
 
-	casbinEnforcer.StartPolicyAutoReload(pbClient, 10*time.Minute)
-
-	// fmt.Println(pbClient.SuperToken)
+	casbinEnforcer.StartPolicyAutoReload(pbClient, 60*time.Minute)
 
 	// Setup and start server
 	r := setupRouter()
