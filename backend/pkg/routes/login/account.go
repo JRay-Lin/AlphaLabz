@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-type LoginRequest struct {
+type loginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -32,7 +32,7 @@ type LoginRequest struct {
 //   - 400 Bad Request → Invalid JSON or missing fields
 //   - 500 Internal Server Error → Server issue
 func HandleAccountLogin(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.PocketBaseClient) {
-	var loginData LoginRequest
+	var loginData loginRequest
 	if err := json.NewDecoder(r.Body).Decode(&loginData); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
