@@ -9,7 +9,7 @@ import (
 )
 
 // UserListResponse represents the response structure for the user list endpoint
-type UserListResponse struct {
+type userListResponse struct {
 	TotalUsers int               `json:"totalUsers"`
 	Users      []pocketbase.User `json:"users"`
 }
@@ -21,22 +21,37 @@ type UserListResponse struct {
 //
 // ✅ Successful Response (200 OK):
 //
-//		{
-//	    "totalUsers": 1,
+//	{
+//	    "totalUsers": 2,
 //	    "users": [
 //	        {
-//	            "id": "qz73n36tig1k7z7",
+//	            "id": "341qctd89t52tod",
 //	            "email": "test@alphalabz.net",
-//	            "emailVisibility": false,
-//	            "verified": false,
-//	            "name": "",
-//	            "avatar": "test.png",
-//	            "role": "ADMIN",
-//	            "gender": "",
-//	            "created": "2025-01-14 12:35:58.273Z",
-//	            "updated": "2025-01-30 10:00:14.643Z"
+//	            "name": "admin",
+//	            "avatar": "flask_nh12m7gyqn.jpg",
+//	            "expand": {
+//	                "Role": {
+//	                    "id": "0001",
+//	                    "name": "ADMIN"
+//	                }
+//	            },
+//	            "created": "2025-02-06 21:18:20.471Z",
+//	            "updated": "2025-02-06 21:19:08.727Z"
 //	        },
-//			...
+//	        {
+//	            "id": "1264imwwgtg65zl",
+//	            "email": "test2@alphalabz.net",
+//	            "name": "test_student",
+//	            "expand": {
+//	                "Role": {
+//	                    "id": "0003",
+//	                    "name": "STUDENT"
+//	                }
+//	            },
+//	            "gender": "Others",
+//	            "created": "2025-02-09 09:57:44.754Z",
+//	            "updated": "2025-02-09 09:57:44.754Z"
+//	        }
 //	    ]
 //	}
 //
@@ -73,17 +88,9 @@ func HandleUserList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 	if err != nil {
 		http.Error(w, "Failed to check permission", http.StatusInternalServerError)
 	} else {
-		// Check if user has "all" scope
-		for _, scope := range scopes {
-			if scope == "all" {
-				reqFields = []string{"*"} // Grant access to all fields
-				break
-			}
-		}
-
-		// If "all" is NOT found, use the allowed scopes
-		if len(reqFields) == 0 {
-			reqFields = scopes
+		if len(scopes) == 0 {
+			http.Error(w, "No permission to access", http.StatusUnauthorized)
+			return
 		}
 	}
 
@@ -93,7 +100,7 @@ func HandleUserList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 		return
 	}
 
-	result := UserListResponse{
+	result := userListResponse{
 		TotalUsers: TotalUsers,
 		Users:      userList,
 	}
