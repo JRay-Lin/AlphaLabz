@@ -24,6 +24,7 @@ type Mailer struct {
 	Username    string `yaml:"username"`
 	Password    string `yaml:"password"`
 	FromAddress string `yaml:"from_address"`
+	FromName    string `yaml:"from_name"`
 	UseTLS      bool   `yaml:"use_tls"`
 }
 
@@ -50,16 +51,6 @@ func LoadSettings(filepath string) (*Settings, error) {
 	}
 
 	return settings, nil
-}
-
-// GetServerAddress returns the formatted server address
-func (s *Server) GetAddress() string {
-	return s.Host + ":" + s.Port
-}
-
-// GetPocketbaseAddress returns the formatted pocketbase address
-func (p *Pocketbase) GetAddress() string {
-	return p.Host + ":" + p.Port
 }
 
 // Save changes to settings file
