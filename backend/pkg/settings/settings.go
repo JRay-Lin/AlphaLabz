@@ -25,7 +25,6 @@ type Mailer struct {
 	Password    string `yaml:"password"`
 	FromAddress string `yaml:"from_address"`
 	FromName    string `yaml:"from_name"`
-	UseTLS      bool   `yaml:"use_tls"`
 }
 
 // Settings represents the main configuration structure
