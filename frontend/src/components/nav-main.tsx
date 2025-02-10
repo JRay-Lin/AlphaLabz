@@ -16,8 +16,9 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import usePathname from "@/hooks/usePathname"
 type MenuItemType = {
   title: string
@@ -44,6 +45,8 @@ export function NavMain({ items }: { items: MenuItemType[] }) {
 
 function MenuItem({ item }: { item: MenuItemType }) {
   const { pathname } = usePathname()
+  const { open } = useSidebar()
+  const navigate = useNavigate()
   if (item.items) {
     return (
       <Collapsible
@@ -54,7 +57,12 @@ function MenuItem({ item }: { item: MenuItemType }) {
       >
         <SidebarMenuItem>
           <CollapsibleTrigger asChild>
-            <SidebarMenuButton tooltip={item.title}>
+            <SidebarMenuButton
+              onClick={() => {
+                if (!open) navigate(item.url)
+              }}
+              tooltip={item.title}
+            >
               {item.icon && <item.icon />}
               <span>{item.title}</span>
               <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />

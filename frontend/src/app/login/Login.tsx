@@ -1,81 +1,93 @@
+import { Button } from "@/components/ui/button"
 import {
   Card,
+  CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
 } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { useState, FormEvent } from "react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Link } from "react-router-dom"
 
-const Login = () => {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    // Here you would typically make your actual login API call
-    console.log("Login attempted with:", { email, password })
-    setIsLoading(false)
+const formSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8).max(100),
+})
+export default function Login() {
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  })
+  const { handleSubmit } = form
+  function onSubmit(data: z.infer<typeof formSchema>) {
+    console.log(data)
   }
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-      <h1 className="text-4xl font-bold mb-8 text-gray-900">AlphaLab</h1>
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Welcome back</CardTitle>
-          <CardDescription>
-            Enter your credentials to access your account
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-2">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
-            </Button>
-            <Button
-              variant="link"
-              className="text-sm text-gray-500"
-              type="button"
-            >
-              Forgot your password?
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
+    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+      <div className="w-full max-w-sm">
+        <div className="flex flex-col gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl text-center">Login</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={handleSubmit(onSubmit)}>
+                  <div className="flex flex-col gap-6">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem className="grid gap-2">
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input  placeholder="m@email.com" {...field} />
+                          </FormControl>
+                          <FormMessage/>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem className="grid gap-2">
+                          <div className="flex items-center">
+                            <FormLabel>Password</FormLabel>
+                            <Link to={"/forget-password"} className="ml-auto inline-block text-sm underline-offset-4 hover:underline">
+                              Forgot your password?
+                            </Link>
+                          </div>
+                          <FormControl>
+                            <Input type="password" {...field} />
+                          </FormControl>
+                          <FormMessage/>
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" className="w-full">
+                      Login
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }
-
-export default Login
