@@ -1,11 +1,11 @@
 package user
 
-type registerRequest struct {
-	Email           string `json:"email"`
-	Password        string `json:"password"`
-	PasswordConfirm string `json:"passwordConfirm"`
-	Role            string `json:"role"`
-}
+// type registerRequest struct {
+// 	Email           string `json:"email"`
+// 	Password        string `json:"password"`
+// 	PasswordConfirm string `json:"passwordConfirm"`
+// 	Role            string `json:"role"`
+// }
 
 // Register a New User
 // Only users with the "MODERATOR" or "ADMIN" role can access this API.
