@@ -75,7 +75,7 @@ func setupRouter() *chi.Mux {
 		// })
 
 		r.Post("/invite", func(w http.ResponseWriter, r *http.Request) {
-			user.HandleInviteNewUser(w, r, settings.Mailer)
+			user.HandleInviteNewUser(w, r, pbClient, casbinEnforcer, SMTPClient)
 		})
 
 		r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
