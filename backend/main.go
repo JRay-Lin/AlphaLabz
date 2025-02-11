@@ -7,6 +7,7 @@ import (
 	"alphalabz/pkg/routes/role"
 	"alphalabz/pkg/routes/user"
 	"alphalabz/pkg/settings"
+	"alphalabz/pkg/smtp"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -19,6 +20,7 @@ import (
 
 var pbClient *pocketbase.PocketBaseClient
 var casbinEnforcer *casbin.CasbinEnforcer
+var SMTPClient *smtp.SMTPClient
 
 func setupRouter() *chi.Mux {
 	r := chi.NewRouter()
@@ -196,6 +198,17 @@ func main() {
 	}
 
 	casbinEnforcer.StartPolicyAutoReload(pbClient, 60*time.Minute)
+
+	SMTPClient = smtp.NewSMTPClient(
+		settings.Mailer.Port,
+		settings.Mailer.Host,
+		settings.Mailer.Username,
+		settings.Mailer.Password,
+		settings.Mailer.FromAddress,
+		settings.Mailer.FromName)
+
+	// Test mail
+	// SMTPClient.SendMail("This is a test", "This is a test email from golang server", "lin299579@gmail.com")
 
 	// Setup and start server
 	r := setupRouter()
