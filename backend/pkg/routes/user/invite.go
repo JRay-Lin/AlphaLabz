@@ -20,7 +20,7 @@ type newUserReq struct {
 	RoleName string `json:"role_name"`
 }
 
-type inviteeData struct {
+type InviteeJWTClaims struct {
 	Email    string `json:"email"`
 	RoleName string `json:"role_name"`
 	RoleId   string `json:"role_id"`
@@ -76,12 +76,12 @@ func HandleInviteNewUser(w http.ResponseWriter, r *http.Request, pbClient *pocke
 		return
 	}
 
-	var invitee inviteeData
+	var invitee InviteeJWTClaims
 	roleExists := false
 	for _, role := range roles {
 		if strings.EqualFold(role.Name, inviteData.RoleName) {
 			roleExists = true
-			invitee = inviteeData{
+			invitee = InviteeJWTClaims{
 				Email:    inviteData.Email,
 				RoleName: role.Name,
 				RoleId:   role.Id,
@@ -119,7 +119,7 @@ func HandleInviteNewUser(w http.ResponseWriter, r *http.Request, pbClient *pocke
 	}
 }
 
-func sendInviteResponse(w http.ResponseWriter, invitee inviteeData) {
+func sendInviteResponse(w http.ResponseWriter, invitee InviteeJWTClaims) {
 	inviteLink, err := generateInvitation(invitee)
 	if err != nil {
 		http.Error(w, "Failed to generate invitation link", http.StatusInternalServerError)
@@ -132,7 +132,7 @@ func sendInviteResponse(w http.ResponseWriter, invitee inviteeData) {
 	}
 }
 
-func generateInvitation(invitee inviteeData) (inviteLink string, err error) {
+func generateInvitation(invitee InviteeJWTClaims) (inviteLink string, err error) {
 	// Get JWT secret from settings
 	settings, err := settings.LoadSettings("settings.yml")
 	if err != nil {
