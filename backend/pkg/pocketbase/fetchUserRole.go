@@ -7,6 +7,7 @@ import (
 )
 
 type UserRole struct {
+	UserId string `json:"id"`
 	Name   string `json:"name"`
 	RoleId string `json:"role"`
 }
