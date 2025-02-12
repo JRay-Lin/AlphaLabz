@@ -11,20 +11,25 @@ import (
 type User struct {
 	Id    string `json:"id,omitempty"`
 	Email string `json:"email,omitempty"`
-	// Verified bool   `json:"verified,omitempty"`
-	Name   string `json:"name,omitempty"`
-	Avatar string `json:"avatar,omitempty"`
-	// Role    string `json:"role,omitempty"`
-	Expand  expandRole `json:"expand,omitempty"`
-	Gender  string     `json:"gender,omitempty"`
-	Created string     `json:"created,omitempty"`
-	Updated string     `json:"updated,omitempty"`
+	// Verified bool       `json:"verified,omitempty"`
+	Name      string       `json:"name,omitempty"`
+	Avatar    string       `json:"avatar,omitempty"`
+	Gender    string       `json:"gender,omitempty"`
+	BirthDate string       `json:"birthdate,omitempty"`
+	Expand    expandFields `json:"expand,omitempty"`
+	Created   string       `json:"created,omitempty"`
+	Updated   string       `json:"updated,omitempty"`
 }
 
-type expandRole struct {
+type expandFields struct {
 	Role struct {
 		Id   string `json:"id,omitempty"`
 		Name string `json:"name,omitempty"`
+	}
+	UserSetting struct {
+		Id          string `json:"id,omitempty"`
+		AppLanguage string `json:"app_language,omitempty"`
+		Theme       string `json:"theme,omitempty"`
 	}
 }
 
