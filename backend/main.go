@@ -186,6 +186,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize PocketBase client: %v", err)
 	}
+	pbClient.StartSuperTokenAutoRenew(adminEmail, adminPassword)
 
 	policies, err := casbin.FetchPermissions(pbClient)
 	if err != nil {

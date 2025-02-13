@@ -46,6 +46,17 @@ func NewPocketBase(baseURL, superuserEmail, superuserPassword string, maxRetries
 
 // authenticateSuperuser logs in the superuser and retrieves the authentication token
 func (pbClient *PocketBaseClient) authenticateSuperuser(email, password string) (string, error) {
+	type authWithPasswordResp struct {
+		Token  string `json:"token"`
+		Record struct {
+			Id string `json:"id"`
+		} `json:"record"`
+	}
+
+	type impersonateResp struct {
+		Token string `json:"token"`
+	}
+
 	url := fmt.Sprintf("%s/api/collections/_superusers/auth-with-password", pbClient.BaseURL)
 
 	// Data payload for authentication
@@ -78,20 +89,56 @@ func (pbClient *PocketBaseClient) authenticateSuperuser(email, password string) 
 		return "", fmt.Errorf("failed to authenticate superuser: status %d", resp.StatusCode)
 	}
 
-	// Parse response
-	var respData struct {
-		Token string `json:"token"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&respData); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
+	// Get auth-with-password data
+	var authWPR authWithPasswordResp
+	if err = json.NewDecoder(resp.Body).Decode(&authWPR); err != nil {
+		return "", fmt.Errorf("failed to decode auth-with-password response: %w", err)
 	}
 
-	return respData.Token, nil
+	// Get impersonate token
+	impersonateUrl := fmt.Sprintf("%s/api/collections/_superusers/impersonate/%s", pbClient.BaseURL, authWPR.Record.Id)
+
+	type DurationPayload struct {
+		Duration int `json:"duration"`
+	}
+
+	duration := DurationPayload{
+		Duration: 2592000, // 30 days
+	}
+
+	impBody, err := json.Marshal(duration)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal duration: %w", err)
+	}
+
+	impReq, err := http.NewRequest(http.MethodPost, impersonateUrl, bytes.NewBuffer(impBody))
+	if err != nil {
+		return "", fmt.Errorf("failed to create impersonate request: %w", err)
+
+	}
+	impReq.Header.Add("Authorization", "Bearer "+authWPR.Token)
+	impReq.Header.Set("Content-Type", "application/json")
+
+	resp, err = pbClient.HTTPClient.Do(impReq)
+	if err != nil {
+		return "", fmt.Errorf("failed to impersonate superuser: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("failed to impersonate superuser: status %d", resp.StatusCode)
+	}
+
+	var impersonateTokenResp impersonateResp
+	if err = json.NewDecoder(resp.Body).Decode(&impersonateTokenResp); err != nil {
+		return "", fmt.Errorf("failed to decode impersonate response: %w", err)
+	}
+
+	return impersonateTokenResp.Token, nil
 }
 
 // Check pocketbase connection is working
-func (p *PocketBaseClient) CheckConnection() error {
-	url := fmt.Sprintf("%s/api/health", p.BaseURL)
+func (pbClient *PocketBaseClient) CheckConnection() error {
+	url := fmt.Sprintf("%s/api/health", pbClient.BaseURL)
 
 	// Create a new HTTP client with timeout
 	client := &http.Client{
@@ -111,4 +158,20 @@ func (p *PocketBaseClient) CheckConnection() error {
 	}
 
 	return nil
+}
+
+func (pbClient *PocketBaseClient) StartSuperTokenAutoRenew(superuserEmail, superuserPassword string) {
+	interval := 24*30*time.Hour - 1*time.Hour // 30 days
+	go func() {
+		for {
+			time.Sleep(interval)
+			token, err := pbClient.authenticateSuperuser(superuserEmail, superuserPassword)
+			if err != nil {
+				log.Fatal("Error renewing token:", err)
+				continue // Prevents goroutine from crashing
+			}
+			pbClient.SuperToken = token
+			log.Println("SuperToken successfully renewed.")
+		}
+	}()
 }
