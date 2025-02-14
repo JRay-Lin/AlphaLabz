@@ -20,7 +20,24 @@ type PocketBaseClient struct {
 func NewPocketBase(baseURL, superuserEmail, superuserPassword string, maxRetries int, retryInterval time.Duration) (*PocketBaseClient, error) {
 	client := &PocketBaseClient{
 		BaseURL:    baseURL,
-		HTTPClient: &http.Client{Timeout: 10 * time.Second}}
+		HTTPClient: &http.Client{Timeout: 10 * time.Second},
+	}
+
+	// Verify PocketBase connection with retries before proceeding to authentication
+	for i := 0; i < maxRetries; i++ {
+		err := client.CheckConnection()
+		if err == nil {
+			log.Println("Successfully connected to PocketBase")
+			break // Exit loop if connection is successful
+		}
+		log.Printf("Failed to connect to PocketBase, attempt %d/%d. Retrying in %s...", i+1, maxRetries, retryInterval)
+		time.Sleep(retryInterval)
+
+		// If it's the last retry and still failing, return an error
+		if i == maxRetries-1 {
+			return nil, fmt.Errorf("failed to connect to PocketBase after %d attempts", maxRetries)
+		}
+	}
 
 	// Authenticate superuser and store the token
 	token, err := client.authenticateSuperuser(superuserEmail, superuserPassword)
@@ -30,18 +47,7 @@ func NewPocketBase(baseURL, superuserEmail, superuserPassword string, maxRetries
 	log.Println("Successfully authenticated superuser")
 	client.SuperToken = token
 
-	// Verify PocketBase connection with retries
-	for i := 0; i < maxRetries; i++ {
-		err := client.CheckConnection()
-		if err == nil {
-			log.Println("Successfully connected to PocketBase")
-			return client, nil
-		}
-		log.Printf("Failed to connect to PocketBase, attempt %d/%d. Retrying in %s...", i+1, maxRetries, retryInterval)
-		time.Sleep(retryInterval)
-	}
-
-	return nil, fmt.Errorf("failed to connect to PocketBase after %d attempts", maxRetries)
+	return client, nil
 }
 
 // authenticateSuperuser logs in the superuser and retrieves the authentication token
