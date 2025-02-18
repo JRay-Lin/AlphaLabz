@@ -17,6 +17,13 @@ type userRole struct {
 	Role string `json:"role"`
 }
 
+// type Role struct {
+// 	Id          string
+// 	Name        string
+// 	Discription string
+// 	Permission  string
+// }
+
 // verifyRequester ensure only superuser can access the endpoints
 func verifyRequester(header string, app *pocketbase.PocketBase) error {
 	if header == "" {
@@ -72,6 +79,40 @@ func main() {
 
 			return e.JSON(http.StatusOK, map[string]any{"name": userRecord.GetString("name"), "role": userRecord.GetString("role")})
 		})
+
+		// se.Router.POST("/api/role/copy/{roleId}", func(e *core.RequestEvent) error {
+		// 	if err := verifyRequester(e.Request.Header.Get("Authorization"), app); err != nil {
+		// 		return e.String(http.StatusUnauthorized, err.Error())
+		// 	}
+
+		// 	roleId := e.Request.PathValue("roleId")
+		// 	role, err := app.FindRecordById("roles", roleId)
+		// 	if err != nil {
+		// 		return e.String(http.StatusNotFound, "Role not found")
+		// 	}
+		// 	roleName := role.GetString("name")
+		// 	roleDiscription := role.GetString("discription")
+		// 	rolePermission := role.GetString("permission")
+
+		// 	// Create new role
+		// 	collection, err := app.FindCollectionByNameOrId("roles")
+		// 	if err != nil {
+		// 		return err
+		// 	}
+
+		// 	record := core.NewRecord(collection)
+
+		// 	record.Set("name", roleName)
+		// 	record.Set("discription", roleDiscription)
+		// 	record.Set("permission", rolePermission)
+
+		// 	err = app.Save(record)
+		// 	if err != nil {
+		// 		return err
+		// 	}
+
+		// 	return e.JSON(http.StatusCreated, map[string]any{"newRoleId": "role"})
+		// })
 
 		return se.Next()
 	})
