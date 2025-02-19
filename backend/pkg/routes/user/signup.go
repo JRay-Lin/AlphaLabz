@@ -4,6 +4,7 @@ import (
 	"alphalabz/pkg/casbin"
 	"alphalabz/pkg/pocketbase"
 	"alphalabz/pkg/settings"
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -14,6 +15,36 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// Sign Up a New User
+//
+// ✅ Description:
+// - Allows a new user to register in the system using a form submission.
+//
+// ✅ Authorization:
+// - Requires an `Authorization` header with a valid token.
+//
+// ✅ Request Body:
+// - `Content-Type: multipart/form-data`
+// - Fields:
+//   - `token` (string, required) → JWT token for authentication.
+//   - `username` (string, required) → The desired username.
+//   - `password` (string, required) → The password for the account.
+//   - `passwordConfirm` (string, required) → Must match `password`.
+//   - `dateOfBirth` (string, optional) → Format: yyyy-mm-dd.
+//   - `gender` (string, optional) → Must be one of: "Male", "Female", "Others".
+//   - `avatar` (file, optional) → Allowed formats: JPEG, JPG, PNG, GIF, HEIC, HEIF, WEBP, SVG.
+//
+// ✅ Successful Response (200 OK):
+//
+//	{
+//	    "message": "User created successfully"
+//	}
+//
+// ❌ Error Responses:
+//   - 400 Bad Request → Missing required fields, invalid password confirmation, or incorrect format.
+//   - 401 Unauthorized → Missing or Invalid Authorization token.
+//   - 415 Unsupported Media Type → Avatar file format is not allowed.
+//   - 500 Internal Server Error → Server issue or file saving error.
 func HandleSignUp(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.PocketBaseClient, ce *casbin.CasbinEnforcer) {
 	// Check if the request method is POST
 	if r.Method != http.MethodPost {
@@ -79,6 +110,7 @@ func HandleSignUp(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.P
 	// Obtain the img that upload from the user
 	var allowedMimeTypes = map[string]bool{
 		"image/jpeg":    true,
+		"image/jpg":     true,
 		"image/png":     true,
 		"image/gif":     true,
 		"image/heic":    true,
@@ -87,47 +119,60 @@ func HandleSignUp(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.P
 		"image/svg+xml": true,
 	}
 
+	// Check if the user has uploaded an avatar and validate it
+	var filePath string
 	file, handler, err := r.FormFile("avatar")
-	if err != nil {
+	if err == http.ErrMissingFile {
+		filePath = ""
+	} else if err != nil {
 		http.Error(w, "Failed to upload avatar", http.StatusBadRequest)
 		return
-	}
-	defer file.Close()
+	} else {
+		defer file.Close()
 
-	mimeType, err := checkMimeType(file)
-	if err != nil || !allowedMimeTypes[mimeType] {
-		http.Error(w, "Invalid file format", http.StatusUnsupportedMediaType)
-		return
-	}
+		uploadDir := "./uploads/"
+		os.MkdirAll(uploadDir, 0755)
+		filePath = uploadDir + fmt.Sprintf("%d_%s", time.Now().Unix(), handler.Filename)
 
-	// Set the upload folder
-	uploadDir := "./uploads/"
-	os.MkdirAll(uploadDir, os.ModePerm)
-	filePath := uploadDir + handler.Filename
+		// Save the file to disk
+		dst, err := os.Create(filePath)
+		if err != nil {
+			http.Error(w, "Failed to save avatar", http.StatusInternalServerError)
+			return
+		}
+		defer dst.Close()
 
-	// Save temp file
-	dst, err := os.Create(filePath)
-	if err != nil {
-		http.Error(w, "Failed to save avatar", http.StatusInternalServerError)
-		return
-	}
-	defer dst.Close()
-	_, err = io.Copy(dst, file)
-	if err != nil {
-		http.Error(w, "Error saving file", http.StatusInternalServerError)
-		return
+		_, err = io.Copy(dst, file)
+		if err != nil {
+			http.Error(w, "Error saving file", http.StatusInternalServerError)
+			return
+		}
+
+		// Check the mime type of the uploaded file
+		savedFile, err := os.Open(filePath)
+		if err != nil {
+			http.Error(w, "Failed to open saved avatar", http.StatusInternalServerError)
+			return
+		}
+		defer savedFile.Close()
+
+		mimeType, err := checkMimeType(savedFile)
+		if err != nil || !allowedMimeTypes[mimeType] {
+			os.Remove(filePath) // Delete the file if it's not an allowed mime type
+			http.Error(w, "Invalid file format", http.StatusUnsupportedMediaType)
+			return
+		}
 	}
 
 	// Regist new user
 	if err = pbClient.NewUser(email, password, passwordConfirm, username, gender, dateOfBirth, roleId, filePath); err != nil {
-		http.Error(w, "Failed to register user", http.StatusInternalServerError)
+		fmt.Println(err)
+		http.Error(w, "Failed to create user", http.StatusInternalServerError)
 		return
 	}
 
 	// Response
-	w.WriteHeader(http.StatusCreated)
-	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte("Resp"))
+	json.NewEncoder(w).Encode(map[string]string{"message": "User created successfully"})
 }
 
 func parseJWT(tokenString string) (roleId, roleName, email string, err error) {

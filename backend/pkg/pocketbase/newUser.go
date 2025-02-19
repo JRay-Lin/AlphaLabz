@@ -61,6 +61,7 @@ func (pbClient *PocketBaseClient) NewUser(email, password, passwordConfirm, name
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+pbClient.SuperToken)
 
 	// Send request
 	resp, err := pbClient.HTTPClient.Do(req)
@@ -79,19 +80,12 @@ func (pbClient *PocketBaseClient) NewUser(email, password, passwordConfirm, name
 
 	// Uplaod user avatar
 	if avatarPath != "" {
-		err := pbClient.uploadAvatar(avatarPath)
+		err := pbClient.UpdateAvatar(newUserRecord.Id, avatarPath)
 		if err != nil {
 			return fmt.Errorf("failed to upload avatar file %w", err)
 		}
-
 	}
 
-	return nil
-}
-
-func (pbClient *PocketBaseClient) uploadAvatar(avatarPath string) error {
-	// Debug
-	fmt.Println(avatarPath)
 	return nil
 }
 
@@ -112,8 +106,8 @@ func (pbClient *PocketBaseClient) createDefaultSettings() (newSettingsId string,
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
-
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+pbClient.SuperToken)
 
 	resp, err := pbClient.HTTPClient.Do(req)
 	if err != nil {

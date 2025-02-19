@@ -30,6 +30,33 @@ type inviteResp struct {
 	Link string `json:"link"`
 }
 
+// Invite a New User
+// Only users with the appropriate permissions can invite new users.
+//
+// ✅ Authorization:
+// - Requires an `Authorization` header with a valid token.
+// - The requesting user must have permission to create users (determined via Casbin).
+//
+// ✅ Request Body (JSON):
+//
+//	{
+//	    "email": "test@example.com",
+//	    "role_name": "user" // Allowed values depend on available roles, excluding "admin"
+//	}
+//
+// ✅ Successful Response (200 OK):
+//
+//	{
+//	    "link": "https://example.com/invite?token=generated-invite-token"
+//	}
+//
+// ❌ Error Responses:
+//   - 400 Bad Request → Invalid JSON or missing fields
+//   - 401 Unauthorized → Missing or invalid Authorization token
+//   - 403 Forbidden → User is not authorized to create this role
+//   - 404 Not Found → Role does not exist
+//   - 405 Method Not Allowed → Request method is not POST
+//   - 500 Internal Server Error → Server issue or failure in generating invite link
 func HandleInviteNewUser(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.PocketBaseClient, ce *casbin.CasbinEnforcer, sc *smtp.SMTPClient) {
 	var permissionConfig = casbin.PermissionConfig{
 		Resources: "users",
