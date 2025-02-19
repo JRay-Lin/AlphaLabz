@@ -20,7 +20,7 @@ type newUserReq struct {
 	RoleName string `json:"role_name"`
 }
 
-type inviteeData struct {
+type InviteeJWTClaims struct {
 	Email    string `json:"email"`
 	RoleName string `json:"role_name"`
 	RoleId   string `json:"role_id"`
@@ -30,6 +30,33 @@ type inviteResp struct {
 	Link string `json:"link"`
 }
 
+// Invite a New User
+// Only users with the appropriate permissions can invite new users.
+//
+// ✅ Authorization:
+// - Requires an `Authorization` header with a valid token.
+// - The requesting user must have permission to create users (determined via Casbin).
+//
+// ✅ Request Body (JSON):
+//
+//	{
+//	    "email": "test@example.com",
+//	    "role_name": "user" // Allowed values depend on available roles, excluding "admin"
+//	}
+//
+// ✅ Successful Response (200 OK):
+//
+//	{
+//	    "link": "https://example.com/invite?token=generated-invite-token"
+//	}
+//
+// ❌ Error Responses:
+//   - 400 Bad Request → Invalid JSON or missing fields
+//   - 401 Unauthorized → Missing or invalid Authorization token
+//   - 403 Forbidden → User is not authorized to create this role
+//   - 404 Not Found → Role does not exist
+//   - 405 Method Not Allowed → Request method is not POST
+//   - 500 Internal Server Error → Server issue or failure in generating invite link
 func HandleInviteNewUser(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.PocketBaseClient, ce *casbin.CasbinEnforcer, sc *smtp.SMTPClient) {
 	var permissionConfig = casbin.PermissionConfig{
 		Resources: "users",
@@ -76,12 +103,12 @@ func HandleInviteNewUser(w http.ResponseWriter, r *http.Request, pbClient *pocke
 		return
 	}
 
-	var invitee inviteeData
+	var invitee InviteeJWTClaims
 	roleExists := false
 	for _, role := range roles {
 		if strings.EqualFold(role.Name, inviteData.RoleName) {
 			roleExists = true
-			invitee = inviteeData{
+			invitee = InviteeJWTClaims{
 				Email:    inviteData.Email,
 				RoleName: role.Name,
 				RoleId:   role.Id,
@@ -119,7 +146,7 @@ func HandleInviteNewUser(w http.ResponseWriter, r *http.Request, pbClient *pocke
 	}
 }
 
-func sendInviteResponse(w http.ResponseWriter, invitee inviteeData) {
+func sendInviteResponse(w http.ResponseWriter, invitee InviteeJWTClaims) {
 	inviteLink, err := generateInvitation(invitee)
 	if err != nil {
 		http.Error(w, "Failed to generate invitation link", http.StatusInternalServerError)
@@ -132,7 +159,7 @@ func sendInviteResponse(w http.ResponseWriter, invitee inviteeData) {
 	}
 }
 
-func generateInvitation(invitee inviteeData) (inviteLink string, err error) {
+func generateInvitation(invitee InviteeJWTClaims) (inviteLink string, err error) {
 	// Get JWT secret from settings
 	settings, err := settings.LoadSettings("settings.yml")
 	if err != nil {

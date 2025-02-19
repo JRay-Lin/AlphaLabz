@@ -37,7 +37,6 @@ func HandleRoleList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 		return
 	}
 
-	var reqFields []string
 	scopes, err := ce.CheckPermissionScopes(userRole.RoleId, permissionConfig.Resources, permissionConfig.Actions)
 	if err != nil {
 		http.Error(w, "Failed to check permission", http.StatusInternalServerError)
@@ -48,7 +47,7 @@ func HandleRoleList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 		}
 	}
 
-	roles, err := pbClient.GetAvailableRoles(reqFields)
+	roles, err := pbClient.GetAvailableRoles(scopes)
 	if err != nil {
 		http.Error(w, "Failed to fetch roles", http.StatusInternalServerError)
 	}

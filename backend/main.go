@@ -78,6 +78,10 @@ func setupRouter() *chi.Mux {
 			user.HandleInviteNewUser(w, r, pbClient, casbinEnforcer, SMTPClient)
 		})
 
+		r.Post("/signup", func(w http.ResponseWriter, r *http.Request) {
+			user.HandleSignUp(w, r, pbClient, casbinEnforcer)
+		})
+
 		r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
 			// routes.HandleUserRemove(w, r, pbClient)
 		})
@@ -172,7 +176,7 @@ func main() {
 
 	pbHost := os.Getenv("POCKETBASE_URL")
 	if pbHost == "" {
-		pbHost = "http://localhost:8090"
+		pbHost = "http://127.0.0.1:8090"
 	}
 
 	// Get admin password from env
@@ -186,6 +190,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize PocketBase client: %v", err)
 	}
+	pbClient.StartSuperTokenAutoRenew(adminEmail, adminPassword)
 
 	policies, err := casbin.FetchPermissions(pbClient)
 	if err != nil {

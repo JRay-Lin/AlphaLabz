@@ -83,7 +83,6 @@ func HandleUserList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 		return
 	}
 
-	var reqFields []string
 	scopes, err := ce.CheckPermissionScopes(userRole.RoleId, permissionConfig.Resources, permissionConfig.Actions)
 	if err != nil {
 		http.Error(w, "Failed to check permission", http.StatusInternalServerError)
@@ -94,7 +93,7 @@ func HandleUserList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 		}
 	}
 
-	userList, TotalUsers, err := pbClient.ListUsers(reqFields)
+	userList, TotalUsers, err := pbClient.ListUsers(scopes)
 	if err != nil {
 		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
 		return
