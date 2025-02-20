@@ -67,9 +67,9 @@ func main() {
 			token := e.Request.PathValue("token")
 			user, err := app.FindAuthRecordByToken(token, core.TokenTypeAuth)
 			if err != nil {
-				return e.String(http.StatusUnauthorized, "Unauthorized 2")
+				return e.String(http.StatusUnauthorized, "Unauthorized")
 			} else if user.Collection().Name != "users" {
-				return e.String(http.StatusForbidden, "Unauthorized 3")
+				return e.String(http.StatusForbidden, "Unauthorized")
 			}
 
 			userRecord, err := app.FindRecordById("users", user.Id)

@@ -27,8 +27,6 @@ func (pbClient *PocketBaseClient) GetAvailableRoles(fields []string) (roles []Ro
 	// Add fields as query parameters if specified
 	url += "?fields=" + strings.Join(fields, ",")
 
-	fmt.Println(url)
-
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
