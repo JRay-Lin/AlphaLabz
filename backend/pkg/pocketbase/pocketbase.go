@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/patrickmn/go-cache"
 )
 
 // PocketBaseClient interacts with the PocketBase HTTP API
@@ -14,6 +16,7 @@ type PocketBaseClient struct {
 	BaseURL    string
 	SuperToken string
 	HTTPClient *http.Client
+	UserCache  *cache.Cache
 }
 
 // NewPocketBase initializes a new PocketBase client, authenticates, and verifies the connection.
@@ -21,6 +24,7 @@ func NewPocketBase(baseURL, superuserEmail, superuserPassword string, maxRetries
 	client := &PocketBaseClient{
 		BaseURL:    baseURL,
 		HTTPClient: &http.Client{Timeout: 10 * time.Second},
+		UserCache:  cache.New(30*time.Minute, 60*time.Minute),
 	}
 
 	// Verify PocketBase connection with retries before proceeding to authentication
