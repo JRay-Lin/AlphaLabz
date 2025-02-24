@@ -13,18 +13,18 @@ import (
 
 // PocketBaseClient interacts with the PocketBase HTTP API
 type PocketBaseClient struct {
-	BaseURL    string
-	SuperToken string
-	HTTPClient *http.Client
-	UserCache  *cache.Cache
+	BaseURL       string
+	SuperToken    string
+	HTTPClient    *http.Client
+	UserInfoCache *cache.Cache
 }
 
 // NewPocketBase initializes a new PocketBase client, authenticates, and verifies the connection.
 func NewPocketBase(baseURL, superuserEmail, superuserPassword string, maxRetries int, retryInterval time.Duration) (*PocketBaseClient, error) {
 	client := &PocketBaseClient{
-		BaseURL:    baseURL,
-		HTTPClient: &http.Client{Timeout: 10 * time.Second},
-		UserCache:  cache.New(30*time.Minute, 60*time.Minute),
+		BaseURL:       baseURL,
+		HTTPClient:    &http.Client{Timeout: 10 * time.Second},
+		UserInfoCache: cache.New(30*time.Minute, 60*time.Minute),
 	}
 
 	// Verify PocketBase connection with retries before proceeding to authentication
