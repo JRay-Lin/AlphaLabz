@@ -4,10 +4,10 @@ import (
 	"alphalabz/pkg/casbin"
 	"alphalabz/pkg/pocketbase"
 	"alphalabz/pkg/settings"
+	"alphalabz/pkg/tools"
 	"encoding/json"
 	"fmt"
 	"io"
-	"mime/multipart"
 	"net/http"
 	"os"
 	"time"
@@ -20,11 +20,9 @@ import (
 // ✅ Description:
 // - Allows a new user to register in the system using a form submission.
 //
-// ✅ Authorization:
-// - Requires an `Authorization` header with a valid token.
-//
 // ✅ Request Body:
 // - `Content-Type: multipart/form-data`
+//
 // - Fields:
 //   - `token` (string, required) → JWT token for authentication.
 //   - `username` (string, required) → The desired username.
@@ -156,7 +154,7 @@ func HandleSignUp(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.P
 		}
 		defer savedFile.Close()
 
-		mimeType, err := checkMimeType(savedFile)
+		mimeType, err := tools.CheckMimeType(savedFile)
 		if err != nil || !allowedMimeTypes[mimeType] {
 			os.Remove(filePath) // Delete the file if it's not an allowed mime type
 			http.Error(w, "Invalid file format", http.StatusUnsupportedMediaType)
@@ -208,17 +206,4 @@ func parseJWT(tokenString string) (roleId, email string, err error) {
 	}
 
 	return roleId, email, nil
-}
-
-func checkMimeType(file multipart.File) (string, error) {
-	// Read 512 bit of the file
-	buf := make([]byte, 512)
-	_, err := file.Read(buf)
-	if err != nil {
-		return "", err
-	}
-	// reset
-	file.Seek(0, 0)
-	mimeType := http.DetectContentType(buf)
-	return mimeType, nil
 }
