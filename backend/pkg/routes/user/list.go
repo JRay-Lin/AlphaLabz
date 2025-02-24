@@ -70,27 +70,18 @@ func HandleUserList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 		return
 	}
 
-	// Get token from request header
-	rawJwtToken, err := tools.TokenExtractor(r.Header.Get("Authorization"))
+	// Extract the authorization token from the request header
+	rawToken, err := tools.TokenExtractor(r.Header.Get("Authorization"))
 	if err != nil {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
 
-	userRole, err := pbClient.FetchUserRole(rawJwtToken)
+	// Fetch user permissions based on the authorization token
+	scopes, err := ce.ScopeFetcher(pbClient, rawToken, permissionConfig)
 	if err != nil {
-		http.Error(w, "Failed to fetch user role", http.StatusInternalServerError)
+		http.Error(w, "Failed to fetch user permissions", http.StatusInternalServerError)
 		return
-	}
-
-	scopes, err := ce.CheckPermissionScopes(userRole.RoleId, permissionConfig.Resources, permissionConfig.Actions)
-	if err != nil {
-		http.Error(w, "Failed to check permission", http.StatusInternalServerError)
-	} else {
-		if len(scopes) == 0 {
-			http.Error(w, "No permission to access", http.StatusUnauthorized)
-			return
-		}
 	}
 
 	userList, TotalUsers, err := pbClient.ListUsers(scopes)
