@@ -19,7 +19,7 @@ type Invitee struct {
 	RoleId string `json:"role_id"`
 }
 
-// Invite a New User
+// Invite a New User.
 // Only users with the appropriate permissions can invite new users.
 //
 // ✅ Authorization:
