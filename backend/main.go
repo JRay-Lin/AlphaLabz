@@ -3,11 +3,13 @@ package main
 import (
 	"alphalabz/pkg/casbin"
 	"alphalabz/pkg/pocketbase"
+	"alphalabz/pkg/routes/labbook"
 	"alphalabz/pkg/routes/login"
 	"alphalabz/pkg/routes/role"
 	"alphalabz/pkg/routes/user"
 	"alphalabz/pkg/settings"
 	"alphalabz/pkg/smtp"
+	"alphalabz/pkg/tools"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -30,6 +32,7 @@ func JWTExpirationMiddleware(next http.Handler) http.Handler {
 			"/login/account": true,
 			"/login/oauth":   true,
 			"/login/sso":     true,
+			"/users/signup":  true,
 		}
 
 		// Check if the path is in the skip list. If it is, then skip JWT validation and pass the request to the next handler.
@@ -67,6 +70,8 @@ func setupRouter() *chi.Mux {
 		AllowCredentials: true,
 	}))
 
+	r.Use(JWTExpirationMiddleware)
+
 	// Health check
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		log.Println("Server is healthy")
@@ -88,13 +93,13 @@ func setupRouter() *chi.Mux {
 			login.HandleAccountLogin(w, r, pbClient)
 		})
 
-		r.Post("/oauth", func(w http.ResponseWriter, r *http.Request) {
-			// routes.HandleOAuth(w, r, pbClient)
-		})
+		// r.Post("/oauth", func(w http.ResponseWriter, r *http.Request) {
+		// 	// routes.HandleOAuth(w, r, pbClient)
+		// })
 
-		r.Post("/sso", func(w http.ResponseWriter, r *http.Request) {
-			// routes.HandleSSO(w, r, pbClient)
-		})
+		// r.Post("/sso", func(w http.ResponseWriter, r *http.Request) {
+		// 	// routes.HandleSSO(w, r, pbClient)
+		// })
 	})
 
 	// Users route
@@ -117,7 +122,7 @@ func setupRouter() *chi.Mux {
 		})
 
 		r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
-			// routes.HandleUserRemove(w, r, pbClient)
+			user.HandleUserRemove(w, r, pbClient, casbinEnforcer)
 		})
 
 		r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
@@ -126,13 +131,13 @@ func setupRouter() *chi.Mux {
 	})
 
 	// Lab_book route
-	r.Route("/lab_book", func(r chi.Router) {
+	r.Route("/labbook", func(r chi.Router) {
 		r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
 			// routes.HandleLabBookList(w, r, pbClient)
 		})
 
-		r.Post("/create", func(w http.ResponseWriter, r *http.Request) {
-			// routes.HandleLabBookCreate(w, r, pbClient)
+		r.Post("/upload", func(w http.ResponseWriter, r *http.Request) {
+			labbook.HandleLabBookUpload(w, r, pbClient, casbinEnforcer)
 		})
 
 		r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
@@ -141,6 +146,10 @@ func setupRouter() *chi.Mux {
 
 		r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
 			// routes.HandleLabBookUpdate(w, r, pbClient)
+		})
+
+		r.Post("/verify", func(w http.ResponseWriter, r *http.Request) {
+			labbook.HandleLabBookVerify(w, r, pbClient, casbinEnforcer)
 		})
 	})
 
@@ -245,9 +254,6 @@ func main() {
 		settings.Mailer.Password,
 		settings.Mailer.FromAddress,
 		settings.Mailer.FromName)
-
-	// Test mail
-	// SMTPClient.SendMail("This is a test", "This is a test email from golang server", "lin299579@gmail.com")
 
 	// Setup and start server
 	r := setupRouter()
