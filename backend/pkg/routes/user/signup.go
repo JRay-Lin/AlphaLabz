@@ -80,7 +80,7 @@ func HandleSignUp(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.P
 	}
 
 	// Parse JWT token
-	roleId, _, email, err := parseJWT(token)
+	roleId, email, err := parseJWT(token)
 	if err != nil {
 		http.Error(w, "Invalid token", http.StatusBadRequest)
 		return
@@ -175,7 +175,7 @@ func HandleSignUp(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.P
 	json.NewEncoder(w).Encode(map[string]string{"message": "User created successfully"})
 }
 
-func parseJWT(tokenString string) (roleId, roleName, email string, err error) {
+func parseJWT(tokenString string) (roleId, email string, err error) {
 	claims := jwt.MapClaims{}
 
 	tokenParsed, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
@@ -195,22 +195,19 @@ func parseJWT(tokenString string) (roleId, roleName, email string, err error) {
 	})
 
 	if err != nil || !tokenParsed.Valid {
-		return "", "", "", fmt.Errorf("invalid token")
+		return "", "", fmt.Errorf("invalid token")
 	}
 
 	// Extract claims with type assertion
 	var ok bool
 	if email, ok = claims["email"].(string); !ok {
-		return "", "", "", fmt.Errorf("invalid token: missing email claim")
+		return "", "", fmt.Errorf("invalid token: missing email claim")
 	}
 	if roleId, ok = claims["role_id"].(string); !ok {
-		return "", "", "", fmt.Errorf("invalid token: missing role_id claim")
-	}
-	if roleName, ok = claims["role_name"].(string); !ok {
-		return "", "", "", fmt.Errorf("invalid token: missing role_name claim")
+		return "", "", fmt.Errorf("invalid token: missing role_id claim")
 	}
 
-	return roleId, roleName, email, nil
+	return roleId, email, nil
 }
 
 func checkMimeType(file multipart.File) (string, error) {
