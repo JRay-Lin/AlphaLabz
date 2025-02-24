@@ -22,6 +22,40 @@ var pbClient *pocketbase.PocketBaseClient
 var casbinEnforcer *casbin.CasbinEnforcer
 var SMTPClient *smtp.SMTPClient
 
+// JWTAuthMiddleware will check the JWT token and validate it. If valid, it will pass the request to the next handler. Otherwise, it will return a 401 Unauthorized response.
+func JWTExpirationMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var jwtSkipPaths = map[string]bool{
+			"/health":        true,
+			"/login/account": true,
+			"/login/oauth":   true,
+			"/login/sso":     true,
+		}
+
+		// Check if the path is in the skip list. If it is, then skip JWT validation and pass the request to the next handler.
+		if _, ok := jwtSkipPaths[r.URL.Path]; ok {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		rawToken, err := tools.TokenExtractor(r.Header.Get("Authorization"))
+		if err != nil {
+			http.Error(w, "token missing or invalid", http.StatusUnauthorized)
+			return
+		}
+
+		// Verify JWT expiration. If the token has expired or is invalid, return a 401 Unauthorized response.
+		valid, err := tools.VerifyJWTExpiration(rawToken)
+		if err != nil || !valid {
+			http.Error(w, "token expired or invalid", http.StatusUnauthorized)
+			return
+		}
+
+		// Token is valid. Pass the request to the next handler.
+		next.ServeHTTP(w, r)
+	})
+}
+
 func setupRouter() *chi.Mux {
 	r := chi.NewRouter()
 
