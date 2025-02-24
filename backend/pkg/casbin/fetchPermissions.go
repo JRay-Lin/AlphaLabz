@@ -22,6 +22,7 @@ type RolePermission struct {
 	// Description string                 `json:"description"`
 	Id string `json:"id"`
 	// Name        string                 `json:"name"`
+	// Type       string                 `json:"type"`
 	Permission map[string]interface{} `json:"permission"`
 }
 
