@@ -51,8 +51,7 @@ func (pbClient *PocketBaseClient) UpdateAvatar(newUserRecordId, avatarPath strin
 	req.Header.Set("Authorization", "Bearer "+pbClient.SuperToken)
 
 	// Do the request and get response back from server
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := pbClient.HTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to execute request: %w", err)
 	}
