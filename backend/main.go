@@ -255,6 +255,12 @@ func main() {
 		settings.Mailer.FromAddress,
 		settings.Mailer.FromName)
 
+	if err = tools.CreateUploadsDir(); err != nil {
+		log.Fatal("Failed to create uploads directory")
+	}
+
+	tools.StartAutoCleanUploads(24 * time.Hour)
+
 	// Setup and start server
 	r := setupRouter()
 	port := settings.Server.Port
