@@ -6,7 +6,7 @@ import (
 )
 
 // CheckPermission validates user actions using Casbin
-func (ce *CasbinEnforcer) VerifyPermission(pbClient *pocketbase.PocketBaseClient, rawJwtToken string, permissionConfig PermissionConfig) (bool, error) {
+func (ce *CasbinEnforcer) VerifyJWTPermission(pbClient *pocketbase.PocketBaseClient, rawJwtToken string, permissionConfig PermissionConfig) (bool, error) {
 	if ce.Enforcer == nil {
 		return false, fmt.Errorf("casbin Enforcer is not initialized")
 	}
