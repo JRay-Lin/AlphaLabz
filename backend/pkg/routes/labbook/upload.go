@@ -70,7 +70,7 @@ func HandleLabBookUpload(w http.ResponseWriter, r *http.Request, pbClient *pocke
 	}
 
 	// Verify user permission using Casbin enforcer
-	hasPermission, err := ce.VerifyPermission(pbClient, rawToken, permissionConfig)
+	hasPermission, err := ce.VerifyJWTPermission(pbClient, rawToken, permissionConfig)
 	if err != nil {
 		http.Error(w, "Failed to verify permission", http.StatusInternalServerError)
 		return
