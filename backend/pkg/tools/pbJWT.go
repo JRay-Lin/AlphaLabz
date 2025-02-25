@@ -17,10 +17,10 @@ type PocketBaseJWTPayload struct {
 	jwt.RegisteredClaims
 }
 
-// GetUserIdFromJwt extracts the user ID from a JWT token.
+// GetUserIdFromJWT extracts the user ID from a JWT token.
 //
 // It returns an empty string and an error if the token is invalid or does not contain a user ID.
-func GetUserIdFromJwt(tokenString string) (string, error) {
+func GetUserIdFromJWT(tokenString string) (string, error) {
 	token, _, err := jwt.NewParser().ParseUnverified(tokenString, &PocketBaseJWTPayload{})
 	if err != nil {
 		return "", err

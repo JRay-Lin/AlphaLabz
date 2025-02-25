@@ -35,7 +35,7 @@ type UserInfo struct {
 
 func (pbClient *PocketBaseClient) FetchUserInfo(userJWT string) (UserInfo, error) {
 	// Get userId from JWT token
-	userId, err := tools.GetUserIdFromJwt(userJWT)
+	userId, err := tools.GetUserIdFromJWT(userJWT)
 	if err != nil {
 		return UserInfo{}, err
 	}
