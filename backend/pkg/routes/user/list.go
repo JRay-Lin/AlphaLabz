@@ -84,7 +84,7 @@ func HandleUserList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 		return
 	}
 
-	userList, TotalUsers, err := pbClient.ListUsers(scopes)
+	userList, TotalUsers, err := pbClient.ListUsers(scopes, []string{}, "")
 	if err != nil {
 		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
 		return
