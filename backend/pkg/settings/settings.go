@@ -29,12 +29,13 @@ type Mailer struct {
 
 // Settings represents the main configuration structure
 type Settings struct {
-	Server        Server     `yaml:"Server"`
-	Pocketbase    Pocketbase `yaml:"Pocketbase"`
-	Mailer        Mailer     `yaml:"Mailer"`
-	AppUrl        string     `yaml:"AppUrl"`
-	IsInitialized bool       `yaml:"IsInitialized"`
-	JWTSecret     string     `yaml:"JWTSecret"`
+	Server         Server     `yaml:"Server"`
+	Pocketbase     Pocketbase `yaml:"Pocketbase"`
+	Mailer         Mailer     `yaml:"Mailer"`
+	AppUrl         string     `yaml:"AppUrl"`
+	IsInitialized  bool       `yaml:"IsInitialized"`
+	JWTSecret      string     `yaml:"JWTSecret"`
+	MaxLabbookSize int64      `yaml:"MaxLabbookSize"`
 }
 
 // LoadSettings reads and parses the settings.yml file
