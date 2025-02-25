@@ -10,15 +10,17 @@ import (
 )
 
 type UserInfo struct {
-	Id           string `json:"id"`
-	Name         string `json:"name"`
-	Email        string `json:"email"`
-	Role         string `json:"role"`
-	UserSettings string `json:"user_settings" `
-	Avatar       string `json:"avatar,omitempty"`
-	Gender       string `json:"gender,omitempty"`
-	BirthDate    string `json:"birthdate,omitempty"`
-	Expand       struct {
+	Id             string `json:"id"`
+	Name           string `json:"name"`
+	Email          string `json:"email"`
+	EmailVisbility bool   `json:"emailVisibility"`
+	Verified       bool   `json:"verified"`
+	Role           string `json:"role"`
+	UserSettings   string `json:"user_settings" `
+	Avatar         string `json:"avatar,omitempty"`
+	Gender         string `json:"gender,omitempty"`
+	BirthDate      string `json:"birthdate,omitempty"`
+	Expand         struct {
 		UserSettings struct {
 			Id       string `json:"id"`
 			Language string `json:"language"`
