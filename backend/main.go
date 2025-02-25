@@ -121,20 +121,24 @@ func setupRouter() *chi.Mux {
 			user.HandleSignUp(w, r, pbClient, casbinEnforcer)
 		})
 
-		r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
-			user.HandleUserRemove(w, r, pbClient, casbinEnforcer)
-		})
+		// r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
+		// 	user.HandleUserRemove(w, r, pbClient, casbinEnforcer)
+		// })
 
-		r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
-			// routes.HandleUserUpdate(w, r, pbClient)
-		})
+		// r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
+		// 	routes.HandleUserUpdate(w, r, pbClient)
+		// })
+
+		// r.Patch("settings", func(w http.ResponseWriter, r *http.Request) {
+		// 	// user.HandlUpdateSettings(w, r, pbClient, casbinEnforcer)
+		// })
 	})
 
 	// Lab_book route
 	r.Route("/labbook", func(r chi.Router) {
-		r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
-			// routes.HandleLabBookList(w, r, pbClient)
-		})
+		// r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
+		// 	routes.HandleLabBookList(w, r, pbClient)
+		// })
 
 		r.Post("/upload", func(w http.ResponseWriter, r *http.Request) {
 			labbook.HandleLabBookUpload(w, r, pbClient, casbinEnforcer)
@@ -148,7 +152,7 @@ func setupRouter() *chi.Mux {
 			// routes.HandleLabBookUpdate(w, r, pbClient)
 		})
 
-		r.Post("/verify", func(w http.ResponseWriter, r *http.Request) {
+		r.Post("/review", func(w http.ResponseWriter, r *http.Request) {
 			labbook.HandleLabBookVerify(w, r, pbClient, casbinEnforcer)
 		})
 
@@ -210,10 +214,17 @@ func setupRouter() *chi.Mux {
 		})
 	})
 
+	r.Route("/system", func(r chi.Router) {
+		r.Patch("/settings", func(w http.ResponseWriter, r *http.Request) {
+			// system.HandleSystemSettings(w, r, pbClient)
+		})
+	})
+
 	return r
 }
 
 func main() {
+	// Initialize settings from YAML file
 	settings, err := settings.LoadSettings("settings.yml")
 	if err != nil {
 		log.Fatal(err)
@@ -221,6 +232,7 @@ func main() {
 		log.Println("Settings loaded successfully")
 	}
 
+	// Get PocketBase host from env or default to local development server
 	pbHost := os.Getenv("POCKETBASE_URL")
 	if pbHost == "" {
 		pbHost = "http://127.0.0.1:8090"
@@ -233,6 +245,7 @@ func main() {
 		log.Fatal("Missing required environment variables: ADMIN_EMAIL and ADMIN_PASSWORD")
 	}
 
+	// Initialize PocketBase client with admin credentials and start supertoken auto-renewal
 	pbClient, err = pocketbase.NewPocketBase(pbHost, adminEmail, adminPassword, 10, 5*time.Second)
 	if err != nil {
 		log.Fatalf("Failed to initialize PocketBase client: %v", err)
@@ -244,25 +257,31 @@ func main() {
 		log.Fatalf("Failed to fetch policies: %v", err)
 	}
 
+	// Initialize Casbin with policies
 	casbinEnforcer, err = casbin.InitializeCasbin(policies)
 	if err != nil {
 		log.Fatalf("Failed to initialize Casbin: %v", err)
 	}
 
+	// Start policy auto-reload every 60 minutes
 	casbinEnforcer.StartPolicyAutoReload(pbClient, 60*time.Minute)
 
+	// Initialize SMTP client
 	SMTPClient = smtp.NewSMTPClient(
 		settings.Mailer.Port,
 		settings.Mailer.Host,
 		settings.Mailer.Username,
 		settings.Mailer.Password,
 		settings.Mailer.FromAddress,
-		settings.Mailer.FromName)
+		settings.Mailer.FromName,
+	)
 
+	// Create uploads directory if it doesn't exist
 	if err = tools.CreateUploadsDir(); err != nil {
 		log.Fatal("Failed to create uploads directory")
 	}
 
+	// Start auto clean uploads every 24 hours
 	tools.StartAutoCleanUploads(24 * time.Hour)
 
 	// Setup and start server
