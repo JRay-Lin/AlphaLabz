@@ -105,7 +105,7 @@ func HandleSignUp(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.P
 		return
 	}
 
-	// Obtain the img that upload from the user
+	// Check if the user has uploaded an avatar and validate it
 	var allowedMimeTypes = map[string]bool{
 		"image/jpeg":    true,
 		"image/jpg":     true,
@@ -128,7 +128,7 @@ func HandleSignUp(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.P
 	} else {
 		defer file.Close()
 
-		uploadDir := "./uploads/"
+		uploadDir := "./uploads/avatar/"
 		os.MkdirAll(uploadDir, 0755)
 		filePath = uploadDir + fmt.Sprintf("%d_%s", time.Now().Unix(), handler.Filename)
 
