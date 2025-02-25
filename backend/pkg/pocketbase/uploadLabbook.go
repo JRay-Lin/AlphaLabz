@@ -35,16 +35,15 @@ func (pbClient *PocketBaseClient) UploadLabbook(title, description, uploader, re
 	}
 
 	// Add multiple attachment files
-	for i, attachmentPath := range attachmentPaths {
+	for _, attachmentPath := range attachmentPaths {
 		attachment, err := os.Open(attachmentPath)
 		if err != nil {
 			return fmt.Errorf("failed to open attachment %s: %w", attachmentPath, err)
 		}
 		defer attachment.Close()
 
-		// Create a unique form field name for each attachment (e.g., "attachments_0", "attachments_1", ...)
-		fieldName := fmt.Sprintf("attachments[%d]", i)
-		attachmentPart, err := writer.CreateFormFile(fieldName, filepath.Base(attachmentPath))
+		// Use the same field name "attachments" for all files
+		attachmentPart, err := writer.CreateFormFile("attachments", filepath.Base(attachmentPath))
 		if err != nil {
 			return fmt.Errorf("failed to create form file for attachment: %w", err)
 		}
@@ -60,6 +59,7 @@ func (pbClient *PocketBaseClient) UploadLabbook(title, description, uploader, re
 	_ = writer.WriteField("creator", uploader)
 	_ = writer.WriteField("reviewer", reviewer)
 	_ = writer.WriteField("review_status", "pending")
+	_ = writer.WriteField("access_list", fmt.Sprintf("[\"%s\", \"%s\"]", uploader, reviewer))
 
 	if description != "" {
 		_ = writer.WriteField("description", description)
