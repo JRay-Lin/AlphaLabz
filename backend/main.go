@@ -151,6 +151,10 @@ func setupRouter() *chi.Mux {
 		r.Post("/verify", func(w http.ResponseWriter, r *http.Request) {
 			labbook.HandleLabBookVerify(w, r, pbClient, casbinEnforcer)
 		})
+
+		r.Get("/reviewers", func(w http.ResponseWriter, r *http.Request) {
+			labbook.GetAvailiableReviewers(w, r, pbClient, casbinEnforcer)
+		})
 	})
 
 	// Schedule routes
