@@ -7,22 +7,28 @@ import (
 	"time"
 )
 
+var directories = []string{
+	"./uploads/avatar",
+	"./uploads/labbook",
+}
+
 // CleanUploads cleans up old or unnecessary uploads.
 func CleanUploads() error {
-	folder := "./uploads"
-
-	// Delete all files in the folder
-	if err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
+	for _, dir := range directories {
+		entries, err := os.ReadDir(dir)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to read directory %s: %w", dir, err)
 		}
-		if !info.IsDir() {
-			fmt.Println("Deleting file:", path)
-			os.Remove(path)
+
+		// Loop through and delete each file/folder inside the directory
+		for _, entry := range entries {
+			entryPath := filepath.Join(dir, entry.Name())
+
+			err := os.RemoveAll(entryPath) // Delete file or subdirectory
+			if err != nil {
+				return fmt.Errorf("failed to remove %s: %w", entryPath, err)
+			}
 		}
-		return nil
-	}); err != nil {
-		return err
 	}
 
 	return nil
@@ -43,10 +49,6 @@ func StartAutoCleanUploads(interval time.Duration) {
 // CreateUploadsDir creates the necessary directories for file uploads.
 func CreateUploadsDir() error {
 	// Define the directories to be created
-	directories := []string{
-		"./uploads/avatar",
-		"./uploads/labbook",
-	}
 
 	// Loop through and create each directory
 	for _, dir := range directories {
