@@ -9,28 +9,27 @@ import (
 
 // User represents a user record from PocketBase
 type User struct {
-	Id    string `json:"id,omitempty"`
-	Email string `json:"email,omitempty"`
-	// Verified bool       `json:"verified,omitempty"`
-	Name      string       `json:"name,omitempty"`
-	Avatar    string       `json:"avatar,omitempty"`
-	Gender    string       `json:"gender,omitempty"`
-	BirthDate string       `json:"birthdate,omitempty"`
-	Expand    expandFields `json:"expand,omitempty"`
-	Created   string       `json:"created,omitempty"`
-	Updated   string       `json:"updated,omitempty"`
+	Id        string  `json:"id,omitempty"`
+	Email     string  `json:"email,omitempty"`
+	Name      string  `json:"name,omitempty"`
+	Avatar    string  `json:"avatar,omitempty"`
+	Gender    string  `json:"gender,omitempty"`
+	RoleId    string  `json:"role,omitempty"`
+	SettingId string  `json:"settings,omitempty"`
+	BirthDate string  `json:"birthdate,omitempty"`
+	Expand    *Expand `json:"expand,omitempty"`
+	Created   string  `json:"created,omitempty"`
+	Updated   string  `json:"updated,omitempty"`
 }
 
-type expandFields struct {
-	Role struct {
-		Id   string `json:"id,omitempty"`
-		Name string `json:"name,omitempty"`
-	}
-	UserSetting struct {
-		Id          string `json:"id,omitempty"`
-		AppLanguage string `json:"app_language,omitempty"`
-		Theme       string `json:"theme,omitempty"`
-	}
+type Expand struct {
+	Role        *Role        `json:"role,omitempty"`
+	UserSetting *UserSetting `json:"userSetting,omitempty"`
+}
+type UserSetting struct {
+	Id          string `json:"id,omitempty"`
+	AppLanguage string `json:"app_language,omitempty"`
+	Theme       string `json:"theme,omitempty"`
 }
 
 // ListUsersResponse represents the PocketBase API response for listing users
@@ -42,12 +41,21 @@ type ListUsersResponse struct {
 }
 
 // ListUsers fetches the list of users
-func (pbClient *PocketBaseClient) ListUsers(fields []string) (userList []User, totalUsers int, err error) {
-	url := fmt.Sprintf("%s/api/collections/users/records?expand=role&", pbClient.BaseURL)
+func (pbClient *PocketBaseClient) ListUsers(fields []string, expand []string, filter string) (userList []User, totalUsers int, err error) {
+	url := fmt.Sprintf("%s/api/collections/users/records", pbClient.BaseURL)
 
 	// Add fields as query parameters if specified
-	url += "&fields=" + strings.Join(fields, ",")
+	url += "?fields=" + strings.Join(fields, ",")
 
+	if len(expand) != 0 {
+		url += "&expand=" + strings.Join(expand, ",")
+	}
+
+	if filter != "" {
+		url += "&filter=" + filter
+	}
+
+	// Create HTTP request
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to create request: %w", err)
