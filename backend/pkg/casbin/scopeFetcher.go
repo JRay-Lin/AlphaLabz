@@ -6,7 +6,7 @@ import (
 )
 
 func (ce *CasbinEnforcer) ScopeFetcher(pbClient *pocketbase.PocketBaseClient, rawJwtToken string, permissionCfg PermissionConfig) (scopes []string, err error) {
-	userRole, err := pbClient.FetchUserInfo(rawJwtToken)
+	userRole, err := pbClient.ViewUser(rawJwtToken)
 	if err != nil {
 		return scopes, nil
 	}

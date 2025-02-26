@@ -94,6 +94,53 @@ func (pbClient *PocketBaseClient) ListUsers(fields []string, expand []string, fi
 	return userListResp.Items, userListResp.TotalItems, nil
 }
 
+// Fetch user info from the server using a JWT token.
+// If the user info is already cached, return it immediately. Otherwise, fetch it from the server and cache it for future use.
+func (pbClient *PocketBaseClient) ViewUser(userJWT string) (User, error) {
+	// Get userId from JWT token
+	userId, err := tools.GetUserIdFromJWT(userJWT)
+	if err != nil {
+		return User{}, err
+	}
+
+	// Check if user info is already cached
+	userInfo, found := pbClient.UserInfoCache.Get(userId)
+	if found {
+		return userInfo.(User), nil
+	} else {
+		// Fetch user info from the server and cache it
+		url := fmt.Sprintf("%s/api/collections/users/records/%s?expand=role,user_settings", pbClient.BaseURL, userId)
+
+		// Create HTTP request and send it to the server
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		if err != nil {
+			return User{}, err
+		}
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", pbClient.SuperToken))
+
+		// Send HTTP request and receive response from the server
+		resp, err := pbClient.HTTPClient.Do(req)
+		if err != nil {
+			return User{}, err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusOK {
+			var userResponse User
+			if err = json.NewDecoder(resp.Body).Decode(&userResponse); err != nil {
+				return User{}, err
+			}
+
+			// Cache the fetched user info for future use
+			pbClient.UserInfoCache.Set(userId, userResponse, cache.DefaultExpiration)
+			return userResponse, nil
+		} else {
+			return User{}, fmt.Errorf("failed to fetch user info: %s", resp.Status)
+		}
+
+	}
+}
+
 // RegisterUser registers a new user in the "users" collection
 func (pbClient *PocketBaseClient) NewUser(email, password, passwordConfirm, name, gender, birthDate, roleId, avatarPath string) error {
 	url := fmt.Sprintf("%s/api/collections/users/records", pbClient.BaseURL)
@@ -168,44 +215,7 @@ func (pbClient *PocketBaseClient) NewUser(email, password, passwordConfirm, name
 	return nil
 }
 
-func (pbClient *PocketBaseClient) createDefaultSettings() (newSettingsId string, err error) {
-	url := fmt.Sprintf("%s/api/collections/user_settings/records", pbClient.BaseURL)
-
-	defaultSettings := map[string]interface{}{
-		"theme":    "light",
-		"language": "233",
-	}
-
-	body, err := json.Marshal(defaultSettings)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal request body, %w", err)
-	}
-
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(body))
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", pbClient.SuperToken))
-
-	resp, err := pbClient.HTTPClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to authenticate user: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("failed to authenticate user: non-200 status code")
-	}
-
-	// Parse response to extract token
-	var respData UserSetting
-	if err := json.NewDecoder(resp.Body).Decode(&respData); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	return respData.Id, nil
-}
-
+// UpdateAvatar updates the user's avatar.
 func (pbClient *PocketBaseClient) UpdateAvatar(newUserRecordId, avatarPath string) error {
 	url := fmt.Sprintf("%s/api/collections/users/records/%s", pbClient.BaseURL, newUserRecordId)
 
@@ -261,47 +271,41 @@ func (pbClient *PocketBaseClient) UpdateAvatar(newUserRecordId, avatarPath strin
 	return nil
 }
 
-func (pbClient *PocketBaseClient) FetchUserInfo(userJWT string) (User, error) {
-	// Get userId from JWT token
-	userId, err := tools.GetUserIdFromJWT(userJWT)
+// createDefaultSettings creates a new default settings record for the user.
+func (pbClient *PocketBaseClient) createDefaultSettings() (newSettingsId string, err error) {
+	url := fmt.Sprintf("%s/api/collections/user_settings/records", pbClient.BaseURL)
+
+	defaultSettings := map[string]interface{}{
+		"theme":    "light",
+		"language": "233",
+	}
+
+	body, err := json.Marshal(defaultSettings)
 	if err != nil {
-		return User{}, err
+		return "", fmt.Errorf("failed to marshal request body, %w", err)
 	}
 
-	// Check if user info is already cached
-	userInfo, found := pbClient.UserInfoCache.Get(userId)
-	if found {
-		return userInfo.(User), nil
-	} else {
-		// Fetch user info from the server and cache it
-		url := fmt.Sprintf("%s/api/collections/users/records/%s?expand=role,user_settings", pbClient.BaseURL, userId)
-
-		// Create HTTP request and send it to the server
-		req, err := http.NewRequest(http.MethodGet, url, nil)
-		if err != nil {
-			return User{}, err
-		}
-		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", pbClient.SuperToken))
-
-		// Send HTTP request and receive response from the server
-		resp, err := pbClient.HTTPClient.Do(req)
-		if err != nil {
-			return User{}, err
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode == http.StatusOK {
-			var userResponse User
-			if err = json.NewDecoder(resp.Body).Decode(&userResponse); err != nil {
-				return User{}, err
-			}
-
-			// Cache the fetched user info for future use
-			pbClient.UserInfoCache.Set(userId, userResponse, cache.DefaultExpiration)
-			return userResponse, nil
-		} else {
-			return User{}, fmt.Errorf("failed to fetch user info: %s", resp.Status)
-		}
-
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(body))
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
 	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", pbClient.SuperToken))
+
+	resp, err := pbClient.HTTPClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to authenticate user: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("failed to authenticate user: non-200 status code")
+	}
+
+	// Parse response to extract token
+	var respData UserSetting
+	if err := json.NewDecoder(resp.Body).Decode(&respData); err != nil {
+		return "", fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return respData.Id, nil
 }

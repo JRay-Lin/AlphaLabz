@@ -78,7 +78,7 @@ func HandleInviteNewUser(w http.ResponseWriter, r *http.Request, pbClient *pocke
 	}
 
 	// Get available roles
-	roles, err := pbClient.GetAvailableRoles([]string{"id", "name", "type"})
+	roles, err := pbClient.ListRoles([]string{"id", "name", "type"})
 	if err != nil {
 		http.Error(w, "Failed to get available roles", http.StatusInternalServerError)
 		return

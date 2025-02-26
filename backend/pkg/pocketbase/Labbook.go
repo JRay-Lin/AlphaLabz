@@ -27,6 +27,7 @@ type Labbook struct {
 	UpdatedAt     string   `json:"updated,omitempty"`
 }
 
+// UploadLabbook uploads a labbook and its attachments to PocketBase.
 func (pbClient *PocketBaseClient) UploadLabbook(title, description, uploader, reviewer, labbookPath string, attachmentPaths []string) error {
 	url := fmt.Sprintf("%s/api/collections/lab_books/records", pbClient.BaseURL)
 
@@ -113,6 +114,7 @@ func (pbClient *PocketBaseClient) UploadLabbook(title, description, uploader, re
 	return nil
 }
 
+// UpdateLabbook updates a lab book record in PocketBase.
 func (pbClient *PocketBaseClient) UpdateLabbook(id string, data map[string]interface{}) error {
 	url := fmt.Sprintf("%s/api/collections/lab_books/records/%s", pbClient.BaseURL, id)
 
@@ -137,6 +139,7 @@ func (pbClient *PocketBaseClient) UpdateLabbook(id string, data map[string]inter
 	return nil
 }
 
+// ViewLabbook retrieves a lab book record from PocketBase.
 func (pbClient *PocketBaseClient) ViewLabbook(id string, fileds []string) (Labbook, error) {
 	url := fmt.Sprintf("%s/api/collections/lab_books/records/%s?fields=%s", pbClient.BaseURL, id, strings.Join(fileds, ","))
 

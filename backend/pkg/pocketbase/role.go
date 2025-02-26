@@ -23,7 +23,7 @@ type ListRolesResponse struct {
 }
 
 // Get all available roles in the database
-func (pbClient *PocketBaseClient) GetAvailableRoles(fields []string) (roles []Role, err error) {
+func (pbClient *PocketBaseClient) ListRoles(fields []string) (roles []Role, err error) {
 	url := fmt.Sprintf("%s/api/collections/roles/records", pbClient.BaseURL)
 	// Add fields as query parameters if specified
 	url += "?fields=" + strings.Join(fields, ",")

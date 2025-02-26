@@ -11,7 +11,7 @@ func (ce *CasbinEnforcer) VerifyJWTPermission(pbClient *pocketbase.PocketBaseCli
 		return false, fmt.Errorf("casbin Enforcer is not initialized")
 	}
 
-	userRole, err := pbClient.FetchUserInfo(rawJwtToken)
+	userRole, err := pbClient.ViewUser(rawJwtToken)
 	if err != nil {
 		return false, nil
 	}
