@@ -23,7 +23,7 @@ type User struct {
 	Avatar    string  `json:"avatar,omitempty"`
 	Gender    string  `json:"gender,omitempty"`
 	RoleId    string  `json:"role,omitempty"`
-	SettingId string  `json:"settings,omitempty"`
+	SettingId string  `json:"user_settings,omitempty"`
 	BirthDate string  `json:"birthdate,omitempty"`
 	Expand    *Expand `json:"expand,omitempty"`
 	Created   string  `json:"created,omitempty"`
@@ -308,4 +308,32 @@ func (pbClient *PocketBaseClient) createDefaultSettings() (newSettingsId string,
 	}
 
 	return respData.Id, nil
+}
+
+// UpdateSettings updates the settings record for the user.
+func (pbClient *PocketBaseClient) UpdateSettings(settingsId string, newSettings map[string]interface{}) error {
+	url := fmt.Sprintf("%s/api/collections/user_settings/records/%s", pbClient.BaseURL, settingsId)
+
+	fmt.Println(url)
+
+	body, err := json.Marshal(newSettings)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request body: %w", err)
+	}
+	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(body))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", pbClient.SuperToken))
+
+	resp, err := pbClient.HTTPClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to update settings: non-200 status code")
+	}
+	return nil
 }

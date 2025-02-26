@@ -125,7 +125,7 @@ func setupRouter() *chi.Mux {
 		// 	routes.HandleUserUpdate(w, r, pbClient)
 		// })
 
-		r.Patch("settings", func(w http.ResponseWriter, r *http.Request) {
+		r.Patch("/settings", func(w http.ResponseWriter, r *http.Request) {
 			user.HandlUpdateSettings(w, r, pbClient, casbinEnforcer)
 		})
 	})
