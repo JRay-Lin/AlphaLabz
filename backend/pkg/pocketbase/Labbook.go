@@ -113,30 +113,6 @@ func (pbClient *PocketBaseClient) UploadLabbook(title, description, uploader, re
 	return nil
 }
 
-func (pbClient *PocketBaseClient) ViewLabbook(id string, fileds []string) (Labbook, error) {
-	url := fmt.Sprintf("%s/api/collections/lab_books/records/%s?fields=%s", pbClient.BaseURL, id, strings.Join(fileds, ","))
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return Labbook{}, fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", pbClient.SuperToken))
-
-	resp, err := pbClient.HTTPClient.Do(req)
-	if err != nil {
-		return Labbook{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
-	defer resp.Body.Close()
-
-	var labbook Labbook
-	if err = json.NewDecoder(resp.Body).Decode(&labbook); err != nil {
-		return Labbook{}, fmt.Errorf("failed to decode response body: %w", err)
-	}
-
-	return labbook, nil
-}
-
 func (pbClient *PocketBaseClient) UpdateLabbook(id string, data map[string]interface{}) error {
 	url := fmt.Sprintf("%s/api/collections/lab_books/records/%s", pbClient.BaseURL, id)
 
@@ -159,4 +135,28 @@ func (pbClient *PocketBaseClient) UpdateLabbook(id string, data map[string]inter
 	defer resp.Body.Close()
 
 	return nil
+}
+
+func (pbClient *PocketBaseClient) ViewLabbook(id string, fileds []string) (Labbook, error) {
+	url := fmt.Sprintf("%s/api/collections/lab_books/records/%s?fields=%s", pbClient.BaseURL, id, strings.Join(fileds, ","))
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return Labbook{}, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", pbClient.SuperToken))
+
+	resp, err := pbClient.HTTPClient.Do(req)
+	if err != nil {
+		return Labbook{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	defer resp.Body.Close()
+
+	var labbook Labbook
+	if err = json.NewDecoder(resp.Body).Decode(&labbook); err != nil {
+		return Labbook{}, fmt.Errorf("failed to decode response body: %w", err)
+	}
+
+	return labbook, nil
 }
