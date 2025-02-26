@@ -69,14 +69,8 @@ func HandleLabBookUpload(w http.ResponseWriter, r *http.Request, pbClient *pocke
 		Actions:   "create",
 		Scopes:    "own",
 	})
-	if err != nil {
+	if err != nil || !hasPermission {
 		http.Error(w, "Failed to verify permission", http.StatusInternalServerError)
-		return
-	}
-
-	// Check if the user has permission to update lab books
-	if !hasPermission {
-		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 
