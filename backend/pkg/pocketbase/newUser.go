@@ -61,7 +61,7 @@ func (pbClient *PocketBaseClient) NewUser(email, password, passwordConfirm, name
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+pbClient.SuperToken)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", pbClient.SuperToken))
 
 	// Send request
 	resp, err := pbClient.HTTPClient.Do(req)
