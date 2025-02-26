@@ -11,7 +11,7 @@ func (ce *CasbinEnforcer) ScopeFetcher(pbClient *pocketbase.PocketBaseClient, ra
 		return scopes, nil
 	}
 
-	scopes, err = ce.checkPermissionScopes(userRole.Role, permissionCfg.Resources, permissionCfg.Actions)
+	scopes, err = ce.checkPermissionScopes(userRole.RoleId, permissionCfg.Resources, permissionCfg.Actions)
 	if err != nil {
 		return scopes, err
 	}

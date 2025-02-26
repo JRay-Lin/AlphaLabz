@@ -16,7 +16,7 @@ func (ce *CasbinEnforcer) VerifyJWTPermission(pbClient *pocketbase.PocketBaseCli
 		return false, nil
 	}
 
-	ok, err := ce.Enforcer.Enforce(userRole.Role, permissionConfig.Resources, permissionConfig.Actions, permissionConfig.Scopes)
+	ok, err := ce.Enforcer.Enforce(userRole.RoleId, permissionConfig.Resources, permissionConfig.Actions, permissionConfig.Scopes)
 	if err != nil {
 		fmt.Println("Error enforcing policy:", err)
 		return false, err
