@@ -277,7 +277,7 @@ func (pbClient *PocketBaseClient) createDefaultSettings() (newSettingsId string,
 
 	defaultSettings := map[string]interface{}{
 		"theme":    "light",
-		"language": "233",
+		"language": "en_US",
 	}
 
 	body, err := json.Marshal(defaultSettings)
