@@ -24,7 +24,8 @@ var pbClient *pocketbase.PocketBaseClient
 var casbinEnforcer *casbin.CasbinEnforcer
 var SMTPClient *smtp.SMTPClient
 
-// JWTAuthMiddleware will check the JWT token and validate it. If valid, it will pass the request to the next handler. Otherwise, it will return a 401 Unauthorized response.
+// JWTAuthMiddleware will check the JWT token and validate it.
+// If valid, it will pass the request to the next handler. Otherwise, it will return a 401 Unauthorized response.
 func JWTExpirationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var jwtSkipPaths = map[string]bool{
@@ -148,12 +149,12 @@ func setupRouter() *chi.Mux {
 			// routes.HandleLabBookRemove(w, r, pbClient)
 		})
 
-		r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
+		r.Patch("/update", func(w http.ResponseWriter, r *http.Request) {
 			// routes.HandleLabBookUpdate(w, r, pbClient)
 		})
 
-		r.Post("/review", func(w http.ResponseWriter, r *http.Request) {
-			labbook.HandleLabBookVerify(w, r, pbClient, casbinEnforcer)
+		r.Patch("/review", func(w http.ResponseWriter, r *http.Request) {
+			labbook.HandleLabBookReview(w, r, pbClient, casbinEnforcer)
 		})
 
 		r.Get("/reviewers", func(w http.ResponseWriter, r *http.Request) {
