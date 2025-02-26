@@ -59,11 +59,6 @@ type userListResponse struct {
 //   - 401 Unauthorized → Missing or Invalid Authorization token
 //   - 500 Internal Server Error → Server issue
 func HandleUserList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.PocketBaseClient, ce *casbin.CasbinEnforcer) {
-	var permissionConfig = casbin.PermissionConfig{
-		Resources: "users",
-		Actions:   "list",
-	}
-
 	// Check if the request method is GET
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -78,7 +73,10 @@ func HandleUserList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 	}
 
 	// Fetch user permissions based on the authorization token
-	scopes, err := ce.ScopeFetcher(pbClient, rawToken, permissionConfig)
+	scopes, err := ce.ScopeFetcher(pbClient, rawToken, casbin.PermissionConfig{
+		Resources: "users",
+		Actions:   "list",
+	})
 	if err != nil {
 		http.Error(w, "Failed to fetch user permissions", http.StatusInternalServerError)
 		return

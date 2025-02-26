@@ -18,12 +18,6 @@ type Verifier struct {
 }
 
 func GetAvailiableReviewers(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.PocketBaseClient, ce *casbin.CasbinEnforcer) {
-	var permissionConfig = casbin.PermissionConfig{
-		Resources: "lab_books",
-		Actions:   "create",
-		Scopes:    "own",
-	}
-
 	// Check if the request method is GET.
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -38,14 +32,12 @@ func GetAvailiableReviewers(w http.ResponseWriter, r *http.Request, pbClient *po
 	}
 
 	// Verify user permission using Casbin enforcer
-	hasPermission, err := ce.VerifyJWTPermission(pbClient, rawToken, permissionConfig)
-	if err != nil {
-		http.Error(w, "Failed to verify permission", http.StatusInternalServerError)
-		return
-	}
-
-	// Check if the user has permission to update lab books
-	if !hasPermission {
+	hasPermission, err := ce.VerifyJWTPermission(pbClient, rawToken, casbin.PermissionConfig{
+		Resources: "lab_books",
+		Actions:   "create",
+		Scopes:    "own",
+	})
+	if err != nil || !hasPermission {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}

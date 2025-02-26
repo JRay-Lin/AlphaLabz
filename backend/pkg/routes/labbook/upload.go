@@ -41,12 +41,6 @@ import (
 //   - 415 Unsupported Media Type →  Invalid file format.
 //   - 500 Internal Server Error → Server issue or file saving error.
 func HandleLabBookUpload(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.PocketBaseClient, ce *casbin.CasbinEnforcer) {
-	var permissionConfig = casbin.PermissionConfig{
-		Resources: "lab_books",
-		Actions:   "create",
-		Scopes:    "own",
-	}
-
 	// Check if the request method is POST.
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -70,7 +64,11 @@ func HandleLabBookUpload(w http.ResponseWriter, r *http.Request, pbClient *pocke
 	}
 
 	// Verify user permission using Casbin enforcer
-	hasPermission, err := ce.VerifyJWTPermission(pbClient, rawToken, permissionConfig)
+	hasPermission, err := ce.VerifyJWTPermission(pbClient, rawToken, casbin.PermissionConfig{
+		Resources: "lab_books",
+		Actions:   "create",
+		Scopes:    "own",
+	})
 	if err != nil {
 		http.Error(w, "Failed to verify permission", http.StatusInternalServerError)
 		return

@@ -47,11 +47,6 @@ type Invitee struct {
 //   - 405 Method Not Allowed → Request method is not POST
 //   - 500 Internal Server Error → Server issue or failure in generating invite link
 func HandleInviteNewUser(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.PocketBaseClient, ce *casbin.CasbinEnforcer, sc *smtp.SMTPClient) {
-	var permissionConfig = casbin.PermissionConfig{
-		Resources: "users",
-		Actions:   "create",
-	}
-
 	// Constrain request method
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -98,7 +93,10 @@ func HandleInviteNewUser(w http.ResponseWriter, r *http.Request, pbClient *pocke
 	}
 
 	// Grant user scopes
-	scopes, err := ce.ScopeFetcher(pbClient, rawToken, permissionConfig)
+	scopes, err := ce.ScopeFetcher(pbClient, rawToken, casbin.PermissionConfig{
+		Resources: "users",
+		Actions:   "create",
+	})
 	if err != nil {
 		http.Error(w, "Failed to fetch user scopes", http.StatusInternalServerError)
 		return

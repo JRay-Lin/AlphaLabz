@@ -109,11 +109,6 @@ func setupRouter() *chi.Mux {
 			user.HandleUserList(w, r, pbClient, casbinEnforcer)
 		})
 
-		// !!! Deprecated !!!
-		// r.Post("/register", func(w http.ResponseWriter, r *http.Request) {
-		// 	user.HandleRegister(w, r, pbClient)
-		// })
-
 		r.Post("/invite", func(w http.ResponseWriter, r *http.Request) {
 			user.HandleInviteNewUser(w, r, pbClient, casbinEnforcer, SMTPClient)
 		})
@@ -130,9 +125,9 @@ func setupRouter() *chi.Mux {
 		// 	routes.HandleUserUpdate(w, r, pbClient)
 		// })
 
-		// r.Patch("settings", func(w http.ResponseWriter, r *http.Request) {
-		// 	// user.HandlUpdateSettings(w, r, pbClient, casbinEnforcer)
-		// })
+		r.Patch("settings", func(w http.ResponseWriter, r *http.Request) {
+			user.HandlUpdateSettings(w, r, pbClient, casbinEnforcer)
+		})
 	})
 
 	// Lab_book route

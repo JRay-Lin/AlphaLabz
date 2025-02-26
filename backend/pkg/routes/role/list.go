@@ -13,11 +13,6 @@ type rolesResp struct {
 }
 
 func HandleRoleList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.PocketBaseClient, ce *casbin.CasbinEnforcer) {
-	var permissionConfig = casbin.PermissionConfig{
-		Resources: "roles",
-		Actions:   "list",
-	}
-
 	// Check if the request method is GET
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -30,7 +25,10 @@ func HandleRoleList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 		return
 	}
 
-	scopes, err := ce.ScopeFetcher(pbClient, rawToken, permissionConfig)
+	scopes, err := ce.ScopeFetcher(pbClient, rawToken, casbin.PermissionConfig{
+		Resources: "roles",
+		Actions:   "list",
+	})
 	if err != nil {
 		http.Error(w, "Failed to fetch user permissions", http.StatusInternalServerError)
 		return
