@@ -66,7 +66,7 @@ func setupRouter() *chi.Mux {
 	// Middleware
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
 	}))
@@ -117,16 +117,24 @@ func setupRouter() *chi.Mux {
 			user.HandleSignUp(w, r, pbClient, casbinEnforcer)
 		})
 
-		// r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
-		// 	user.HandleUserRemove(w, r, pbClient, casbinEnforcer)
-		// })
-
-		// r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
-		// 	routes.HandleUserUpdate(w, r, pbClient)
-		// })
+		r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
+			user.HandleUserRemove(w, r, pbClient, casbinEnforcer)
+		})
 
 		r.Patch("/settings", func(w http.ResponseWriter, r *http.Request) {
 			user.HandlUpdateSettings(w, r, pbClient, casbinEnforcer)
+		})
+
+		r.Route("/account", func(r chi.Router) {
+			r.Get("/data", func(w http.ResponseWriter, r *http.Request) {})
+
+			r.Patch("/modify/email", func(w http.ResponseWriter, r *http.Request) {})
+			r.Patch("/modify/password", func(w http.ResponseWriter, r *http.Request) {})
+
+			// for name, birthdate, gender
+			r.Patch("/update/personalInfo", func(w http.ResponseWriter, r *http.Request) {})
+
+			r.Patch("/update/avatar", func(w http.ResponseWriter, r *http.Request) {})
 		})
 	})
 
@@ -140,13 +148,13 @@ func setupRouter() *chi.Mux {
 			labbook.HandleLabBookUpload(w, r, pbClient, casbinEnforcer)
 		})
 
-		r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
-			// routes.HandleLabBookRemove(w, r, pbClient)
-		})
+		// r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
+		// routes.HandleLabBookRemove(w, r, pbClient)
+		// })
 
-		r.Patch("/update", func(w http.ResponseWriter, r *http.Request) {
-			// routes.HandleLabBookUpdate(w, r, pbClient)
-		})
+		// r.Patch("/update", func(w http.ResponseWriter, r *http.Request) {
+		// routes.HandleLabBookUpdate(w, r, pbClient)
+		// })
 
 		r.Patch("/review", func(w http.ResponseWriter, r *http.Request) {
 			labbook.HandleLabBookReview(w, r, pbClient, casbinEnforcer)
@@ -208,11 +216,24 @@ func setupRouter() *chi.Mux {
 		r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
 			role.HandleRoleList(w, r, pbClient, casbinEnforcer)
 		})
+
+		r.Get("/view", func(w http.ResponseWriter, r *http.Request) {
+		})
+
+		r.Patch("/update", func(w http.ResponseWriter, r *http.Request) {})
+
+		r.Post("/create", func(w http.ResponseWriter, r *http.Request) {})
+
+		r.Delete("/delete", func(w http.ResponseWriter, r *http.Request) {})
 	})
 
 	r.Route("/system", func(r chi.Router) {
 		r.Patch("/settings", func(w http.ResponseWriter, r *http.Request) {
 			// system.HandleSystemSettings(w, r, pbClient)
+		})
+
+		r.Route("/plugin", func(r chi.Router) {
+			r.Post("/install", func(w http.ResponseWriter, r *http.Request) {})
 		})
 	})
 
