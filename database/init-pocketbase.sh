@@ -8,7 +8,7 @@ PB_BINARY="./pocketbase"
 wait_for_pocketbase() {
     local retries=30
     local wait_time=2
-    local endpoint="http://localhost:8090/api/health"
+    local endpoint="http://127.0.0.1:8090/api/health"
     
     echo "Waiting for PocketBase to be ready..."
     while [ $retries -gt 0 ]; do
@@ -25,7 +25,7 @@ wait_for_pocketbase() {
 }
 
 # Start PocketBase in the background
-"${PB_BINARY}" serve --http=0.0.0.0:8090 &
+"${PB_BINARY}" serve --http=127.0.0.1:8090 &
 PB_PID=$!
 
 # Ensure PocketBase shuts down on script exit
