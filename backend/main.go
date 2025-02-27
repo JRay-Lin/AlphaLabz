@@ -138,7 +138,7 @@ func setupRouter() *chi.Mux {
 
 	// Lab_book route
 	r.Route("/labbook", func(r chi.Router) {
-		r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
+		r.Get("/history", func(w http.ResponseWriter, r *http.Request) {
 			// routes.HandleLabBookList(w, r, pbClient)
 		})
 
