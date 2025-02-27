@@ -126,8 +126,6 @@ func setupRouter() *chi.Mux {
 		})
 
 		r.Route("/account", func(r chi.Router) {
-			r.Get("/data", func(w http.ResponseWriter, r *http.Request) {})
-
 			r.Patch("/modify/email", func(w http.ResponseWriter, r *http.Request) {})
 			r.Patch("/modify/password", func(w http.ResponseWriter, r *http.Request) {})
 
@@ -140,13 +138,22 @@ func setupRouter() *chi.Mux {
 
 	// Lab_book route
 	r.Route("/labbook", func(r chi.Router) {
-		// r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
-		// 	routes.HandleLabBookList(w, r, pbClient)
-		// })
+		r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleLabBookList(w, r, pbClient)
+		})
+
+		r.Get("/list/reviews", func(w http.ResponseWriter, r *http.Request) {})
+
+		r.Get("/view/{id}", func(w http.ResponseWriter, r *http.Request) {
+			labbookId := chi.URLParam(r, "id")
+			labbook.HandleLabBookView(w, r, labbookId, pbClient, casbinEnforcer)
+		})
 
 		r.Post("/upload", func(w http.ResponseWriter, r *http.Request) {
 			labbook.HandleLabBookUpload(w, r, pbClient, casbinEnforcer)
 		})
+
+		r.Post("/share", func(w http.ResponseWriter, r *http.Request) {})
 
 		// r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
 		// routes.HandleLabBookRemove(w, r, pbClient)
@@ -217,8 +224,7 @@ func setupRouter() *chi.Mux {
 			role.HandleRoleList(w, r, pbClient, casbinEnforcer)
 		})
 
-		r.Get("/view", func(w http.ResponseWriter, r *http.Request) {
-		})
+		r.Get("/view", func(w http.ResponseWriter, r *http.Request) {})
 
 		r.Patch("/update", func(w http.ResponseWriter, r *http.Request) {})
 
