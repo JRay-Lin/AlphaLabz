@@ -153,7 +153,9 @@ func setupRouter() *chi.Mux {
 			labbook.HandleLabBookUpload(w, r, pbClient, casbinEnforcer)
 		})
 
-		r.Post("/share", func(w http.ResponseWriter, r *http.Request) {})
+		r.Post("/share", func(w http.ResponseWriter, r *http.Request) {
+			labbook.HandleShareLabbook(w, r, pbClient, casbinEnforcer)
+		})
 
 		// r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
 		// routes.HandleLabBookRemove(w, r, pbClient)
@@ -234,9 +236,9 @@ func setupRouter() *chi.Mux {
 	})
 
 	r.Route("/system", func(r chi.Router) {
-		r.Patch("/settings", func(w http.ResponseWriter, r *http.Request) {
-			// system.HandleSystemSettings(w, r, pbClient)
-		})
+		r.Patch("/settings", func(w http.ResponseWriter, r *http.Request) {})
+
+		r.Patch("/settings/smtp", func(w http.ResponseWriter, r *http.Request) {})
 
 		r.Route("/plugin", func(r chi.Router) {
 			r.Post("/install", func(w http.ResponseWriter, r *http.Request) {})
