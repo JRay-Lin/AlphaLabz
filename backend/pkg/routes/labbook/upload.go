@@ -64,7 +64,7 @@ func HandleLabBookUpload(w http.ResponseWriter, r *http.Request, pbClient *pocke
 	}
 
 	// Verify user permission using Casbin enforcer
-	hasPermission, err := ce.VerifyJWTPermission(pbClient, rawToken, casbin.PermissionConfig{
+	hasPermission, _, err := ce.VerifyJWTPermission(pbClient, rawToken, casbin.PermissionConfig{
 		Resources: "lab_books",
 		Actions:   "create",
 		Scopes:    "own",

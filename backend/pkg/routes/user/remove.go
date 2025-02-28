@@ -22,7 +22,7 @@ func HandleUserRemove(w http.ResponseWriter, r *http.Request, pbClient *pocketba
 		return
 	}
 
-	hasPermmission, err := ce.VerifyJWTPermission(pbClient, rawToken, casbin.PermissionConfig{
+	hasPermmission, _, err := ce.VerifyJWTPermission(pbClient, rawToken, casbin.PermissionConfig{
 		Resources: "users",
 		Actions:   "delete",
 		Scopes:    "*",

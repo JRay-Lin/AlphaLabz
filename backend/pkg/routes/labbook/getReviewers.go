@@ -32,7 +32,7 @@ func GetAvailiableReviewers(w http.ResponseWriter, r *http.Request, pbClient *po
 	}
 
 	// Verify user permission using Casbin enforcer
-	hasPermission, err := ce.VerifyJWTPermission(pbClient, rawToken, casbin.PermissionConfig{
+	hasPermission, _, err := ce.VerifyJWTPermission(pbClient, rawToken, casbin.PermissionConfig{
 		Resources: "lab_books",
 		Actions:   "create",
 		Scopes:    "own",

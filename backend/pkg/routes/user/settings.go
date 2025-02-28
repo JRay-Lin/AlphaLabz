@@ -25,7 +25,7 @@ func HandlUpdateSettings(w http.ResponseWriter, r *http.Request, pbClient *pocke
 		return
 	}
 
-	hasPermmission, err := ce.VerifyJWTPermission(pbClient, rawToken, casbin.PermissionConfig{
+	hasPermmission, _, err := ce.VerifyJWTPermission(pbClient, rawToken, casbin.PermissionConfig{
 		Resources: "users",
 		Actions:   "update",
 		Scopes:    "own",

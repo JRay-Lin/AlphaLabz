@@ -27,7 +27,7 @@ func HandleLabBookView(w http.ResponseWriter, r *http.Request, labbookId string,
 		http.Error(w, "Failed to obtain userId from token", http.StatusInternalServerError)
 	}
 
-	hasStarPermission, err := ce.VerifyJWTPermission(pbClient, rawToken, casbin.PermissionConfig{
+	hasStarPermission, _, err := ce.VerifyJWTPermission(pbClient, rawToken, casbin.PermissionConfig{
 		Resources: "lab_books",
 		Actions:   "view",
 		Scopes:    "*",
