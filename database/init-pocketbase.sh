@@ -25,7 +25,7 @@ wait_for_pocketbase() {
 }
 
 # Start PocketBase in the background
-"${PB_BINARY}" serve --http=127.0.0.1:8090 &
+"${PB_BINARY}" serve --http=0.0.0.0:8090 &
 PB_PID=$!
 
 # Ensure PocketBase shuts down on script exit
