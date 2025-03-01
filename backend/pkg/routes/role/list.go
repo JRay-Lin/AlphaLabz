@@ -25,7 +25,13 @@ func HandleRoleList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 		return
 	}
 
-	scopes, err := ce.ScopeFetcher(pbClient, rawToken, casbin.PermissionConfig{
+	userId, err := tools.GetUserIdFromJWT(rawToken)
+	if err != nil {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+
+	scopes, err := ce.ScopeFetcher(pbClient, userId, casbin.PermissionConfig{
 		Resources: "roles",
 		Actions:   "list",
 	})

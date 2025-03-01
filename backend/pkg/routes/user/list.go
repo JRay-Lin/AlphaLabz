@@ -72,8 +72,14 @@ func HandleUserList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 		return
 	}
 
+	userId, err := tools.GetUserIdFromJWT(rawToken)
+	if err != nil {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+
 	// Fetch user permissions based on the authorization token
-	scopes, err := ce.ScopeFetcher(pbClient, rawToken, casbin.PermissionConfig{
+	scopes, err := ce.ScopeFetcher(pbClient, userId, casbin.PermissionConfig{
 		Resources: "users",
 		Actions:   "list",
 	})

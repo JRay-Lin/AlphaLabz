@@ -30,7 +30,7 @@ type Invitee struct {
 //
 //	{
 //	    "email": "test@example.com",
-//	    "roleId": "0003" // Allowed values depend on available roles, excluding "0001"
+//	    "role_id": "0003" // Allowed values depend on available roles, excluding "0001"
 //	}
 //
 // ✅ Successful Response (200 OK):
@@ -92,8 +92,14 @@ func HandleInviteNewUser(w http.ResponseWriter, r *http.Request, pbClient *pocke
 		return
 	}
 
+	userId, err := tools.GetUserIdFromJWT(rawToken)
+	if err != nil {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+
 	// Grant user scopes
-	scopes, err := ce.ScopeFetcher(pbClient, rawToken, casbin.PermissionConfig{
+	scopes, err := ce.ScopeFetcher(pbClient, userId, casbin.PermissionConfig{
 		Resources: "users",
 		Actions:   "create",
 	})

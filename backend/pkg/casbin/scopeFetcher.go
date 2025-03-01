@@ -8,8 +8,8 @@ import (
 // ScopeFetcher fetches the scopes a user has based on their role and the permission configuration.
 //
 // Require Resources and Actions to be provided in PermissionConfig
-func (ce *CasbinEnforcer) ScopeFetcher(pbClient *pocketbase.PocketBaseClient, rawJwtToken string, permissionCfg PermissionConfig) (scopes []string, err error) {
-	userRole, err := pbClient.ViewUser(rawJwtToken)
+func (ce *CasbinEnforcer) ScopeFetcher(pbClient *pocketbase.PocketBaseClient, userId string, permissionCfg PermissionConfig) (scopes []string, err error) {
+	userRole, err := pbClient.ViewUser(userId)
 	if err != nil {
 		return scopes, nil
 	}
