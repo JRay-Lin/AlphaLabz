@@ -104,7 +104,7 @@ func setupRouter() *chi.Mux {
 	})
 
 	// Users route
-	r.Route("/users", func(r chi.Router) {
+	r.Route("/user", func(r chi.Router) {
 		r.Get("/view/{id}", func(w http.ResponseWriter, r *http.Request) {
 			userId := chi.URLParam(r, "id")
 			user.HandleUserView(w, r, userId, pbClient, casbinEnforcer)
@@ -143,19 +143,19 @@ func setupRouter() *chi.Mux {
 
 	// Lab_book route
 	r.Route("/labbook", func(r chi.Router) {
-		r.Get("/history", func(w http.ResponseWriter, r *http.Request) {
-			// routes.HandleLabBookList(w, r, pbClient)
+		r.Post("/upload", func(w http.ResponseWriter, r *http.Request) {
+			labbook.HandleLabBookUpload(w, r, pbClient, casbinEnforcer)
 		})
 
-		r.Get("/list/reviews", func(w http.ResponseWriter, r *http.Request) {})
+		r.Get("/upload/history", func(w http.ResponseWriter, r *http.Request) {})
+
+		r.Get("/reviews", func(w http.ResponseWriter, r *http.Request) {})
+
+		r.Get("/shared", func(w http.ResponseWriter, r *http.Request) {})
 
 		r.Get("/view/{id}", func(w http.ResponseWriter, r *http.Request) {
 			labbookId := chi.URLParam(r, "id")
 			labbook.HandleLabBookView(w, r, labbookId, pbClient, casbinEnforcer)
-		})
-
-		r.Post("/upload", func(w http.ResponseWriter, r *http.Request) {
-			labbook.HandleLabBookUpload(w, r, pbClient, casbinEnforcer)
 		})
 
 		r.Post("/share", func(w http.ResponseWriter, r *http.Request) {
