@@ -223,10 +223,12 @@ func HandleLabBookUpload(w http.ResponseWriter, r *http.Request, pbClient *pocke
 	// Return response
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message":     "Labbook uploaded successfully",
-		"title":       title,
-		"description": description,
-		"userId":      userId,
-		"reviwerId":   reviewerId,
+		"message": "Labbook uploaded successfully",
+		"content": map[string]string{
+			"title":       title,
+			"description": description,
+			"userId":      userId,
+			"reviewerId":  reviewerId,
+		},
 	})
 }

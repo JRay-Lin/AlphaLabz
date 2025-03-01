@@ -22,7 +22,7 @@ type Labbook struct {
 	ReviewComment string   `json:"review_comment,omitempty"`
 	File          string   `json:"file,omitempty"`
 	Attachments   []string `json:"attachments,omitempty"`
-	AccessList    []string `json:"access_list,omitempty"`
+	ShareTo       []string `json:"share_to,omitempty"`
 	CreatedAt     string   `json:"created,omitempty"`
 	UpdatedAt     string   `json:"updated,omitempty"`
 }
@@ -77,7 +77,6 @@ func (pbClient *PocketBaseClient) UploadLabbook(title, description, uploader, re
 	_ = writer.WriteField("creator", uploader)
 	_ = writer.WriteField("reviewer", reviewer)
 	_ = writer.WriteField("review_status", "pending")
-	_ = writer.WriteField("access_list", fmt.Sprintf("[\"%s\", \"%s\"]", uploader, reviewer))
 
 	if description != "" {
 		_ = writer.WriteField("description", description)
@@ -168,7 +167,7 @@ func (pbClient *PocketBaseClient) ShareLabbook(id string, RecipientId string, ac
 	url := fmt.Sprintf("%s/api/collections/lab_books/records/%s", pbClient.BaseURL, id)
 
 	data := map[string]interface{}{
-		"access_list": append(accessList, RecipientId),
+		"share_to": RecipientId,
 	}
 
 	body, err := json.Marshal(data)

@@ -42,7 +42,7 @@ func HandleLabBookView(w http.ResponseWriter, r *http.Request, labbookId string,
 	}
 
 	// if userId in access list or hasStarPermission
-	if hasStarPermission || tools.Contains(labbookContent.AccessList, userId) {
+	if hasStarPermission || tools.Contains(labbookContent.ShareTo, userId) {
 		json.NewEncoder(w).Encode(labbookContent)
 	} else {
 		http.Error(w, "Forbidden", http.StatusForbidden)

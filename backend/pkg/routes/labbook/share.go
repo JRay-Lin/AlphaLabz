@@ -30,8 +30,8 @@ func HandleShareLabbook(w http.ResponseWriter, r *http.Request, pbClient *pocket
 	// Verify user permission using Casbin enforcer
 	hasPermission, starPermission, err := ce.VerifyJWTPermission(pbClient, rawToken, casbin.PermissionConfig{
 		Resources: "lab_books",
-		Actions:   "share",
-		Scopes:    "own",
+		Actions:   "update",
+		Scopes:    "share",
 	})
 	if err != nil || !hasPermission {
 		http.Error(w, "Forbidden", http.StatusForbidden)
@@ -51,13 +51,13 @@ func HandleShareLabbook(w http.ResponseWriter, r *http.Request, pbClient *pocket
 		return
 	}
 
-	labbookInfo, err := pbClient.ViewLabbook(shareRequest.LabbookId, []string{"id", "creator", "access_list"})
+	labbookInfo, err := pbClient.ViewLabbook(shareRequest.LabbookId, []string{"id", "creator", "share_to"})
 	if err != nil {
 		http.Error(w, "Failed to retrieve labbook information", http.StatusInternalServerError)
 		return
 	}
 
-	if tools.Contains(labbookInfo.AccessList, shareRequest.RecipientId) {
+	if tools.Contains(labbookInfo.ShareTo, shareRequest.RecipientId) || labbookInfo.Creator == shareRequest.RecipientId || labbookInfo.Reviewer == shareRequest.RecipientId {
 		http.Error(w, "Recipient already has access", http.StatusConflict)
 		return
 	}
@@ -83,7 +83,7 @@ func HandleShareLabbook(w http.ResponseWriter, r *http.Request, pbClient *pocket
 		http.Error(w, "Recipient does not exist", http.StatusNotFound)
 		return
 	} else {
-		err := pbClient.ShareLabbook(shareRequest.LabbookId, shareRequest.RecipientId, labbookInfo.AccessList)
+		err := pbClient.ShareLabbook(shareRequest.LabbookId, shareRequest.RecipientId, labbookInfo.ShareTo)
 		if err != nil {
 			http.Error(w, "Failed to share labbook", http.StatusInternalServerError)
 			return
