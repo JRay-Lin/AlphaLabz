@@ -320,6 +320,29 @@ func (pbClient *PocketBaseClient) DeleteUser(userId string) error {
 	return nil
 }
 
+func (pbClient *PocketBaseClient) CheckUserExists(userId string) (bool, error) {
+	url := fmt.Sprintf("%s/api/collections/users/records/%s", pbClient.BaseURL, userId)
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return false, fmt.Errorf("failed to create check request: %w", err)
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", pbClient.SuperToken))
+	resp, err := pbClient.HTTPClient.Do(req)
+	if err != nil {
+		return false, fmt.Errorf("failed to send check request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return false, nil
+	} else if resp.StatusCode == http.StatusOK {
+		return true, nil
+	} else {
+		return false, fmt.Errorf("failed to check user existence: non-200/404 status code")
+	}
+}
+
 // ------------------------------- helper functions -------------------------------
 // createDefaultSettings creates a new default settings record for the user.
 func (pbClient *PocketBaseClient) createDefaultSettings() (newSettingsId string, err error) {
