@@ -68,8 +68,14 @@ func HandlUpdateSettings(w http.ResponseWriter, r *http.Request, pbClient *pocke
 		return
 	}
 
+	userId, err := tools.GetUserIdFromJWT(rawToken)
+	if err != nil {
+		http.Error(w, "Error retrieving user ID", http.StatusInternalServerError)
+		return
+	}
+
 	// Get user's settings Id
-	userInfo, err := pbClient.ViewUser(rawToken)
+	userInfo, err := pbClient.ViewUser(userId)
 	if err != nil {
 		http.Error(w, "Error retrieving user info", http.StatusInternalServerError)
 		return

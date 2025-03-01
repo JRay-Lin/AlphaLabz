@@ -1,7 +1,6 @@
 package pocketbase
 
 import (
-	"alphalabz/pkg/tools"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -94,15 +93,9 @@ func (pbClient *PocketBaseClient) ListUsers(fields []string, expand []string, fi
 	return userListResp.Items, userListResp.TotalItems, nil
 }
 
-// Fetch user info from the server using a JWT token.
+// Fetch user info from the server using userId.
 // If the user info is already cached, return it immediately. Otherwise, fetch it from the server and cache it for future use.
-func (pbClient *PocketBaseClient) ViewUser(userJWT string) (User, error) {
-	// Get userId from JWT token
-	userId, err := tools.GetUserIdFromJWT(userJWT)
-	if err != nil {
-		return User{}, err
-	}
-
+func (pbClient *PocketBaseClient) ViewUser(userId string) (User, error) {
 	// Check if user info is already cached
 	userInfo, found := pbClient.UserInfoCache.Get(userId)
 	if found {
