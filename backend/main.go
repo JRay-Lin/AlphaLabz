@@ -105,6 +105,11 @@ func setupRouter() *chi.Mux {
 
 	// Users route
 	r.Route("/users", func(r chi.Router) {
+		r.Get("/view/{id}", func(w http.ResponseWriter, r *http.Request) {
+			userId := chi.URLParam(r, "id")
+			user.HandleUserView(w, r, userId, pbClient, casbinEnforcer)
+		})
+
 		r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
 			user.HandleUserList(w, r, pbClient, casbinEnforcer)
 		})
