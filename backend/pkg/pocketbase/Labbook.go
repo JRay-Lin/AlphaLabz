@@ -163,3 +163,31 @@ func (pbClient *PocketBaseClient) ViewLabbook(id string, fileds []string) (Labbo
 
 	return labbook, nil
 }
+
+func (pbClient *PocketBaseClient) ShareLabbook(id string, RecipientId string, accessList []string) error {
+	url := fmt.Sprintf("%s/api/collections/lab_books/records/%s", pbClient.BaseURL, id)
+
+	data := map[string]interface{}{
+		"access_list": append(accessList, RecipientId),
+	}
+
+	body, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("failed to marshal data: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(body))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", pbClient.SuperToken))
+
+	resp, err := pbClient.HTTPClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
