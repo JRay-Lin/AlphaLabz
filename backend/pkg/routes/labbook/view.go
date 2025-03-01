@@ -42,19 +42,10 @@ func HandleLabBookView(w http.ResponseWriter, r *http.Request, labbookId string,
 	}
 
 	// if userId in access list or hasStarPermission
-	if hasStarPermission || contains(labbookContent.AccessList, userId) {
+	if hasStarPermission || tools.Contains(labbookContent.AccessList, userId) {
 		json.NewEncoder(w).Encode(labbookContent)
 	} else {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 	}
 
-}
-
-func contains(slice []string, target string) bool {
-	for _, s := range slice {
-		if s == target {
-			return true
-		}
-	}
-	return false
 }

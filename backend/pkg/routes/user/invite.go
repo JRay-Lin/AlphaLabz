@@ -111,19 +111,19 @@ func HandleInviteNewUser(w http.ResponseWriter, r *http.Request, pbClient *pocke
 			RoleId: inviteData.RoleId,
 			Email:  inviteData.Email,
 		}
-		if contains(scopes, "*") {
+		if tools.Contains(scopes, "*") {
 			// Allow user to create all other roles
 			sendInviteResponse(w, inviteeData)
 			return
 		}
 
-		if contains(scopes, inviteData.RoleId) {
+		if tools.Contains(scopes, inviteData.RoleId) {
 			// Allow user to create this role
 			sendInviteResponse(w, inviteeData)
 			return
 		}
 
-		if !contains(scopes, inviteData.RoleId) && !contains(scopes, "*") {
+		if !tools.Contains(scopes, inviteData.RoleId) && !tools.Contains(scopes, "*") {
 			http.Error(w, "Unauthorized to create this role", http.StatusForbidden)
 			return
 		}
@@ -173,13 +173,4 @@ func generateInvitation(invitee Invitee) (inviteLink string, err error) {
 		inviteLink = fmt.Sprintf("%s/invite?token=%s", settings.AppUrl, tokenString)
 		return inviteLink, nil
 	}
-}
-
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
 }
