@@ -26,12 +26,12 @@ func HandleUserView(w http.ResponseWriter, r *http.Request, userId string, pbCli
 		return
 	}
 
-	hasPermission, starPermission, err := ce.VerifyJWTPermission(pbClient, rawToken, casbin.PermissionConfig{
+	hasPermission, _, err := ce.VerifyJWTPermission(pbClient, rawToken, casbin.PermissionConfig{
 		Resources: "users",
 		Actions:   "view",
 		Scopes:    "own",
 	})
-	if err != nil || (!hasPermission && !starPermission) {
+	if err != nil || !hasPermission {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
