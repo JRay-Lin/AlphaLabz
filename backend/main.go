@@ -151,15 +151,14 @@ func setupRouter() *chi.Mux {
 
 		r.Get("/reviews", func(w http.ResponseWriter, r *http.Request) {})
 
+		r.Post("/share", func(w http.ResponseWriter, r *http.Request) {
+			labbook.HandleShareLabbook(w, r, pbClient, casbinEnforcer)
+		})
 		r.Get("/shared", func(w http.ResponseWriter, r *http.Request) {})
 
 		r.Get("/view/{id}", func(w http.ResponseWriter, r *http.Request) {
 			labbookId := chi.URLParam(r, "id")
 			labbook.HandleLabBookView(w, r, labbookId, pbClient, casbinEnforcer)
-		})
-
-		r.Post("/share", func(w http.ResponseWriter, r *http.Request) {
-			labbook.HandleShareLabbook(w, r, pbClient, casbinEnforcer)
 		})
 
 		// r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
@@ -262,6 +261,16 @@ func main() {
 		log.Println("Settings loaded successfully")
 	}
 
+	// Initialize SMTP client
+	SMTPClient = smtp.NewSMTPClient(
+		settings.Mailer.Port,
+		settings.Mailer.Host,
+		settings.Mailer.Username,
+		settings.Mailer.Password,
+		settings.Mailer.FromAddress,
+		settings.Mailer.FromName,
+	)
+
 	// Get PocketBase host from env or default to local development server
 	pbHost := os.Getenv("POCKETBASE_URL")
 	if pbHost == "" {
@@ -295,16 +304,6 @@ func main() {
 
 	// Start policy auto-reload every 60 minutes
 	casbinEnforcer.StartPolicyAutoReload(pbClient, 60*time.Minute)
-
-	// Initialize SMTP client
-	SMTPClient = smtp.NewSMTPClient(
-		settings.Mailer.Port,
-		settings.Mailer.Host,
-		settings.Mailer.Username,
-		settings.Mailer.Password,
-		settings.Mailer.FromAddress,
-		settings.Mailer.FromName,
-	)
 
 	// Create uploads directory if it doesn't exist
 	if err = tools.CreateUploadsDir(); err != nil {
