@@ -3,6 +3,7 @@ package pocketbase
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -136,6 +137,36 @@ func (pbClient *PocketBaseClient) UpdateLabbook(id string, data map[string]inter
 	defer resp.Body.Close()
 
 	return nil
+}
+
+func (pbClient *PocketBaseClient) ListLabbooks(filter string, fileds []string) ([]Labbook, error) {
+	url := fmt.Sprintf("%s/api/collections/lab_books/records?fields=%s&filter=(%s)", pbClient.BaseURL, strings.Join(fileds, ","), filter)
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", pbClient.SuperToken))
+
+	resp, err := pbClient.HTTPClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get labbooks: %w", errors.New(resp.Status))
+	}
+
+	var response struct {
+		Items []Labbook `json:"items"`
+	}
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	return response.Items, nil
+
 }
 
 // ViewLabbook retrieves a lab book record from PocketBase.

@@ -131,8 +131,8 @@ func setupRouter() *chi.Mux {
 		})
 
 		r.Route("/account", func(r chi.Router) {
-			r.Patch("/modify/email", func(w http.ResponseWriter, r *http.Request) {})
-			r.Patch("/modify/password", func(w http.ResponseWriter, r *http.Request) {})
+			// r.Patch("/modify/email", func(w http.ResponseWriter, r *http.Request) {})
+			// r.Patch("/modify/password", func(w http.ResponseWriter, r *http.Request) {})
 
 			// for name, birthdate, gender
 			r.Patch("/update", func(w http.ResponseWriter, r *http.Request) {
@@ -152,7 +152,9 @@ func setupRouter() *chi.Mux {
 			labbook.HandleLabBookUpload(w, r, pbClient, casbinEnforcer)
 		})
 
-		r.Get("/upload/history", func(w http.ResponseWriter, r *http.Request) {})
+		r.Get("/upload/history", func(w http.ResponseWriter, r *http.Request) {
+			labbook.HandleLabbookUploadHistory(w, r, pbClient, casbinEnforcer)
+		})
 
 		r.Get("/reviews", func(w http.ResponseWriter, r *http.Request) {})
 
