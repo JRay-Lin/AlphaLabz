@@ -208,9 +208,37 @@ func (pbClient *PocketBaseClient) NewUser(email, password, passwordConfirm, name
 	return nil
 }
 
+// UpdateAvatar updates the user's profile.
+func (pbClient *PocketBaseClient) UpdateProfile(userId string, newProfile User) error {
+	url := fmt.Sprintf("%s/api/collections/users/records/%s", pbClient.BaseURL, userId)
+
+	body, err := json.Marshal(newProfile)
+	if err != nil {
+		return fmt.Errorf("failed to marshal user profile: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(body))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", pbClient.SuperToken))
+
+	resp, err := pbClient.HTTPClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
 // UpdateAvatar updates the user's avatar.
-func (pbClient *PocketBaseClient) UpdateAvatar(newUserRecordId, avatarPath string) error {
-	url := fmt.Sprintf("%s/api/collections/users/records/%s", pbClient.BaseURL, newUserRecordId)
+func (pbClient *PocketBaseClient) UpdateAvatar(userId, avatarPath string) error {
+	url := fmt.Sprintf("%s/api/collections/users/records/%s", pbClient.BaseURL, userId)
 
 	// Open avatar file
 	file, err := os.Open(avatarPath)

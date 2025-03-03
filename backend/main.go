@@ -135,9 +135,14 @@ func setupRouter() *chi.Mux {
 			r.Patch("/modify/password", func(w http.ResponseWriter, r *http.Request) {})
 
 			// for name, birthdate, gender
-			r.Patch("/update/personalInfo", func(w http.ResponseWriter, r *http.Request) {})
+			r.Patch("/update", func(w http.ResponseWriter, r *http.Request) {
+				user.HandlUpdateProfile(w, r, pbClient, casbinEnforcer)
+			})
 
-			r.Patch("/update/avatar", func(w http.ResponseWriter, r *http.Request) {})
+			// for avatar only
+			r.Patch("/update/avatar", func(w http.ResponseWriter, r *http.Request) {
+				user.HandleUpdateAvatar(w, r, pbClient, casbinEnforcer)
+			})
 		})
 	})
 
@@ -176,6 +181,20 @@ func setupRouter() *chi.Mux {
 		r.Get("/reviewers", func(w http.ResponseWriter, r *http.Request) {
 			labbook.GetAvailiableReviewers(w, r, pbClient, casbinEnforcer)
 		})
+	})
+
+	r.Route("/roles", func(r chi.Router) {
+		r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
+			role.HandleRoleList(w, r, pbClient, casbinEnforcer)
+		})
+
+		r.Get("/view", func(w http.ResponseWriter, r *http.Request) {})
+
+		r.Patch("/update", func(w http.ResponseWriter, r *http.Request) {})
+
+		r.Post("/create", func(w http.ResponseWriter, r *http.Request) {})
+
+		r.Delete("/delete", func(w http.ResponseWriter, r *http.Request) {})
 	})
 
 	// Schedule routes
@@ -223,20 +242,6 @@ func setupRouter() *chi.Mux {
 		r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
 			// routes.HandleScheduleUpdate(w, r, pbClient)
 		})
-	})
-
-	r.Route("/roles", func(r chi.Router) {
-		r.Get("/list", func(w http.ResponseWriter, r *http.Request) {
-			role.HandleRoleList(w, r, pbClient, casbinEnforcer)
-		})
-
-		r.Get("/view", func(w http.ResponseWriter, r *http.Request) {})
-
-		r.Patch("/update", func(w http.ResponseWriter, r *http.Request) {})
-
-		r.Post("/create", func(w http.ResponseWriter, r *http.Request) {})
-
-		r.Delete("/delete", func(w http.ResponseWriter, r *http.Request) {})
 	})
 
 	r.Route("/system", func(r chi.Router) {
