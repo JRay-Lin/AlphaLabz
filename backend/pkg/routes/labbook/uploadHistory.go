@@ -14,14 +14,14 @@ func HandleLabbookUploadHistory(w http.ResponseWriter, r *http.Request, pbClient
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	rawToekn, err := tools.TokenExtractor(r.Header.Get("Authorization"))
+	rawToken, err := tools.TokenExtractor(r.Header.Get("Authorization"))
 	if err != nil {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
 
 	// Check if the user has permission to view lab book upload history
-	hasPermission, _, err := ce.VerifyJWTPermission(pbClient, rawToekn, casbin.PermissionConfig{
+	hasPermission, _, err := ce.VerifyJWTPermission(pbClient, rawToken, casbin.PermissionConfig{
 		Resources: "lab_books",
 		Actions:   "view",
 		Scopes:    "own"})
@@ -30,7 +30,7 @@ func HandleLabbookUploadHistory(w http.ResponseWriter, r *http.Request, pbClient
 		return
 	}
 
-	userId, err := tools.GetUserIdFromJWT(rawToekn)
+	userId, err := tools.GetUserIdFromJWT(rawToken)
 	if err != nil {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
