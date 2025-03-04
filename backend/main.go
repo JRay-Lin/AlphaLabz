@@ -222,8 +222,12 @@ func setupRouter() *chi.Mux {
 		r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
 			// routes.HandleScheduleRemove(w, r, pbClient)
 		})
-		r.Post("/update", func(w http.ResponseWriter, r *http.Request) {
+		r.Patch("/update", func(w http.ResponseWriter, r *http.Request) {
 			// routes.HandleScheduleUpdate(w, r, pbClient)
+		})
+
+		r.Patch("/share", func(w http.ResponseWriter, r *http.Request) {
+			// routes.HandleScheduleShare(w, r, pbClient)
 		})
 	})
 
