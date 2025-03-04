@@ -8,10 +8,6 @@ import (
 	"net/http"
 )
 
-type rolesResp struct {
-	Roles []pocketbase.Role
-}
-
 func HandleRoleList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.PocketBaseClient, ce *casbin.CasbinEnforcer) {
 	// Check if the request method is GET
 	if r.Method != http.MethodGet {
@@ -45,12 +41,8 @@ func HandleRoleList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 		http.Error(w, "Failed to fetch roles", http.StatusInternalServerError)
 	}
 
-	result := rolesResp{
-		Roles: roles,
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(result); err != nil {
+	if err := json.NewEncoder(w).Encode(roles); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 		return
 	}
