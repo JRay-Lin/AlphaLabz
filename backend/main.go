@@ -194,13 +194,21 @@ func setupRouter() *chi.Mux {
 			role.HandleRoleList(w, r, pbClient, casbinEnforcer)
 		})
 
-		r.Get("/view", func(w http.ResponseWriter, r *http.Request) {})
+		r.Get("/view/{id}", func(w http.ResponseWriter, r *http.Request) {
+			// roleId := chi.URLParam(r, "id")
+			// role.HandleRoleView(w, r, roleId, pbClient, casbinEnforcer)
+		})
 
-		r.Patch("/update", func(w http.ResponseWriter, r *http.Request) {})
+		// r.Patch("/update", func(w http.ResponseWriter, r *http.Request) {})
 
-		r.Post("/create", func(w http.ResponseWriter, r *http.Request) {})
+		r.Post("/create", func(w http.ResponseWriter, r *http.Request) {
+			role.HandleCreateNewRole(w, r, pbClient, casbinEnforcer)
+		})
 
-		r.Delete("/delete", func(w http.ResponseWriter, r *http.Request) {})
+		r.Delete("/remove/{id}", func(w http.ResponseWriter, r *http.Request) {
+			deleteRoleId := chi.URLParam(r, "id")
+			role.HandleDeleteRole(w, r, deleteRoleId, pbClient, casbinEnforcer)
+		})
 	})
 
 	// Schedule routes

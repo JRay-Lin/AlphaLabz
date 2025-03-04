@@ -41,7 +41,7 @@ type RolePermission struct {
 	Id string `json:"id"`
 	// Name        string                 `json:"name"`
 	// Type       string                 `json:"type"`
-	Permission map[string]interface{} `json:"permission"`
+	Permissions map[string]interface{} `json:"permissions"`
 }
 
 // InitializeCasbin initializes Casbin with provided policies (no file storage)
@@ -167,7 +167,7 @@ func convertCasbinFormat(permissions []RolePermission) [][]interface{} {
 	for _, role := range permissions {
 		roleID := role.Id // Role ID as Casbin "sub"
 
-		for resource, actions := range role.Permission {
+		for resource, actions := range role.Permissions {
 			actionList, ok := actions.([]interface{})
 			if !ok {
 				continue

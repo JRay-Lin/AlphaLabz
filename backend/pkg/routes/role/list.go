@@ -36,7 +36,7 @@ func HandleRoleList(w http.ResponseWriter, r *http.Request, pbClient *pocketbase
 		return
 	}
 
-	roles, err := pbClient.ListRoles(scopes)
+	roles, err := pbClient.ListRoles(scopes, "")
 	if err != nil {
 		http.Error(w, "Failed to fetch roles", http.StatusInternalServerError)
 	}
