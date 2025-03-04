@@ -232,3 +232,43 @@ func HandleLabBookUpload(w http.ResponseWriter, r *http.Request, pbClient *pocke
 		},
 	})
 }
+
+func HandleLabbookUploadHistory(w http.ResponseWriter, r *http.Request, pbClient *pocketbase.PocketBaseClient, ce *casbin.CasbinEnforcer) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	rawToken, err := tools.TokenExtractor(r.Header.Get("Authorization"))
+	if err != nil {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+
+	// Check if the user has permission to review lab books
+	hasPermission, _, err := ce.VerifyJWTPermission(pbClient, rawToken, casbin.PermissionConfig{
+		Resources: "lab_books",
+		Actions:   "view",
+		Scopes:    "own"})
+	if err != nil || !hasPermission {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	userId, err := tools.GetUserIdFromJWT(rawToken)
+	if err != nil {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+
+	uploadHistory, err := pbClient.ListLabbooks(fmt.Sprintf("creator='%s'", userId), []string{"*"})
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Failed to get lab book upload history", http.StatusInternalServerError)
+		return
+	}
+
+	// Return the lab book upload history as JSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(uploadHistory)
+}

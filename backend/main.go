@@ -156,12 +156,10 @@ func setupRouter() *chi.Mux {
 			labbook.HandleLabbookUploadHistory(w, r, pbClient, casbinEnforcer)
 		})
 
-		r.Get("/reviews", func(w http.ResponseWriter, r *http.Request) {})
-
 		r.Post("/share", func(w http.ResponseWriter, r *http.Request) {
 			labbook.HandleShareLabbook(w, r, pbClient, casbinEnforcer)
 		})
-		r.Get("/shared", func(w http.ResponseWriter, r *http.Request) {})
+		r.Get("/shared/list", func(w http.ResponseWriter, r *http.Request) {})
 
 		r.Get("/view/{id}", func(w http.ResponseWriter, r *http.Request) {
 			labbookId := chi.URLParam(r, "id")
@@ -178,6 +176,10 @@ func setupRouter() *chi.Mux {
 
 		r.Patch("/review", func(w http.ResponseWriter, r *http.Request) {
 			labbook.HandleLabBookReview(w, r, pbClient, casbinEnforcer)
+		})
+
+		r.Get("/review/pending", func(w http.ResponseWriter, r *http.Request) {
+			labbook.GetPendingReviews(w, r, pbClient, casbinEnforcer)
 		})
 
 		r.Get("/reviewers", func(w http.ResponseWriter, r *http.Request) {
