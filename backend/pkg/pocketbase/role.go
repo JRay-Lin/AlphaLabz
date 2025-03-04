@@ -15,13 +15,6 @@ type Role struct {
 	Permissions interface{} `json:"permission"`
 }
 
-type ListRolesResponse struct {
-	Page       int    `json:"page"`
-	PerPage    int    `json:"perPage"`
-	TotalItems int    `json:"totalItems"`
-	Items      []Role `json:"items"`
-}
-
 // Get all available roles in the database
 func (pbClient *PocketBaseClient) ListRoles(fields []string) (roles []Role, err error) {
 	url := fmt.Sprintf("%s/api/collections/roles/records", pbClient.BaseURL)
@@ -46,11 +39,20 @@ func (pbClient *PocketBaseClient) ListRoles(fields []string) (roles []Role, err 
 	}
 
 	// Parse JSON response
-	var roleListResp ListRolesResponse
+	var roleListResp struct {
+		Page       int    `json:"page"`
+		PerPage    int    `json:"perPage"`
+		TotalItems int    `json:"totalItems"`
+		Items      []Role `json:"items"`
+	}
 	err = json.NewDecoder(resp.Body).Decode(&roleListResp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode response body: %w", err)
 	}
 
 	return roleListResp.Items, nil
+}
+
+func (pbClient *PocketBaseClient) CreateRole(role Role) error {
+	return nil
 }
