@@ -159,7 +159,9 @@ func setupRouter() *chi.Mux {
 		r.Post("/share", func(w http.ResponseWriter, r *http.Request) {
 			labbook.HandleShareLabbook(w, r, pbClient, casbinEnforcer)
 		})
-		r.Get("/shared/list", func(w http.ResponseWriter, r *http.Request) {})
+		r.Get("/shared/list", func(w http.ResponseWriter, r *http.Request) {
+			labbook.GetSharedList(w, r, pbClient, casbinEnforcer)
+		})
 
 		r.Get("/view/{id}", func(w http.ResponseWriter, r *http.Request) {
 			labbookId := chi.URLParam(r, "id")

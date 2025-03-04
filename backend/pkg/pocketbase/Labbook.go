@@ -23,7 +23,7 @@ type Labbook struct {
 	ReviewComment string   `json:"review_comment,omitempty"`
 	File          string   `json:"file,omitempty"`
 	Attachments   []string `json:"attachments,omitempty"`
-	ShareTo       []string `json:"share_to,omitempty"`
+	ShareWith     []string `json:"share_with,omitempty"`
 	CreatedAt     string   `json:"created,omitempty"`
 	UpdatedAt     string   `json:"updated,omitempty"`
 }
