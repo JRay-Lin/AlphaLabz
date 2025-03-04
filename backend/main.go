@@ -31,9 +31,9 @@ func JWTExpirationMiddleware(next http.Handler) http.Handler {
 		var jwtSkipPaths = map[string]bool{
 			"/health":        true,
 			"/login/account": true,
-			"/login/oauth":   true,
-			"/login/sso":     true,
-			"/users/signup":  true,
+			// "/login/oauth":   true,
+			// "/login/sso":     true,
+			"/users/signup": true,
 		}
 
 		// Check if the path is in the skip list. If it is, then skip JWT validation and pass the request to the next handler.
