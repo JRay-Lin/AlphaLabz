@@ -364,7 +364,7 @@ func getEnv() (hostURL, adminEmail, adminPassword string, err error) {
 	adminEmail = os.Getenv("ADMIN_EMAIL")
 	adminPassword = os.Getenv("ADMIN_PASSWORD")
 	if adminEmail == "" || adminPassword == "" {
-		fmt.Errorf("Missing required environment variables: ADMIN_EMAIL and ADMIN_PASSWORD")
+		return hostURL, adminEmail, adminPassword, fmt.Errorf("missing required environment variables: ADMIN_EMAIL and ADMIN_PASSWORD")
 	}
 
 	return hostURL, adminEmail, adminPassword, nil
