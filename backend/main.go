@@ -26,6 +26,64 @@ var pbClient *pocketbase.PocketBaseClient
 var casbinEnforcer *casbin.CasbinEnforcer
 var SMTPClient *smtp.SMTPClient
 
+func main() {
+	// Initialize settings from YAML file
+	settings, err := settings.LoadSettings("settings.yml")
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		log.Println("Settings loaded successfully")
+	}
+
+	pbHost, adminEmail, adminPassword, err := getEnv()
+	if err != nil {
+		log.Fatal("Failed to retrieve env variable")
+	}
+
+	// Initialize SMTP client
+	SMTPClient = smtp.NewSMTPClient(
+		settings.Mailer.Port,
+		settings.Mailer.Host,
+		settings.Mailer.Username,
+		settings.Mailer.Password,
+		settings.Mailer.FromAddress,
+		settings.Mailer.FromName,
+	)
+
+	// Initialize PocketBase client with admin credentials and start supertoken auto-renewal
+	pbClient, err = pocketbase.NewPocketBase(pbHost, adminEmail, adminPassword, 10, 5*time.Second)
+	if err != nil {
+		log.Fatalf("Failed to initialize PocketBase client: %v", err)
+	}
+
+	// Initialize Casbin with policies
+	policies, err := casbin.FetchPermissions(pbClient)
+	if err != nil {
+		log.Fatalf("Failed to fetch policies: %v", err)
+	}
+
+	casbinEnforcer, err = casbin.InitializeCasbin(policies)
+	if err != nil {
+		log.Fatalf("Failed to initialize Casbin: %v", err)
+	}
+
+	// Create uploads directory if it doesn't exist
+	if err = tools.CreateUploadsDir(); err != nil {
+		log.Fatal("Failed to create uploads directory")
+	}
+
+	// Start cron jobs
+	c := initCron(pbClient, casbinEnforcer, adminEmail, adminPassword)
+	c.Start()
+	log.Println("Successfully start CRON jobs")
+
+	// Setup and start server
+	r := setupRouter()
+	port := settings.Server.Port
+	log.Printf("Server starting on port %s\n", port)
+	log.Fatal(http.ListenAndServe(":"+port, r))
+}
+
 // JWTAuthMiddleware will check the JWT token and validate it.
 // If valid, it will pass the request to the next handler. Otherwise, it will return a 401 Unauthorized response.
 func jwtExpirationMiddleware(next http.Handler) http.Handler {
@@ -310,62 +368,4 @@ func getEnv() (hostURL, adminEmail, adminPassword string, err error) {
 	}
 
 	return hostURL, adminEmail, adminPassword, nil
-}
-
-func main() {
-	// Initialize settings from YAML file
-	settings, err := settings.LoadSettings("settings.yml")
-	if err != nil {
-		log.Fatal(err)
-	} else {
-		log.Println("Settings loaded successfully")
-	}
-
-	pbHost, adminEmail, adminPassword, err := getEnv()
-	if err != nil {
-		log.Fatal("Failed to retrieve env variable")
-	}
-
-	// Initialize SMTP client
-	SMTPClient = smtp.NewSMTPClient(
-		settings.Mailer.Port,
-		settings.Mailer.Host,
-		settings.Mailer.Username,
-		settings.Mailer.Password,
-		settings.Mailer.FromAddress,
-		settings.Mailer.FromName,
-	)
-
-	// Initialize PocketBase client with admin credentials and start supertoken auto-renewal
-	pbClient, err = pocketbase.NewPocketBase(pbHost, adminEmail, adminPassword, 10, 5*time.Second)
-	if err != nil {
-		log.Fatalf("Failed to initialize PocketBase client: %v", err)
-	}
-
-	// Initialize Casbin with policies
-	policies, err := casbin.FetchPermissions(pbClient)
-	if err != nil {
-		log.Fatalf("Failed to fetch policies: %v", err)
-	}
-
-	casbinEnforcer, err = casbin.InitializeCasbin(policies)
-	if err != nil {
-		log.Fatalf("Failed to initialize Casbin: %v", err)
-	}
-
-	// Create uploads directory if it doesn't exist
-	if err = tools.CreateUploadsDir(); err != nil {
-		log.Fatal("Failed to create uploads directory")
-	}
-
-	// Start cron jobs
-	c := initCron(pbClient, casbinEnforcer, adminEmail, adminPassword)
-	c.Start()
-	log.Println("Successfully start CRON jobs")
-
-	// Setup and start server
-	r := setupRouter()
-	port := settings.Server.Port
-	log.Printf("Server starting on port %s\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, r))
 }
