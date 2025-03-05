@@ -171,18 +171,11 @@ func (pbClient *PocketBaseClient) CheckConnection() error {
 }
 
 // Start a goroutine to automatically renew the superuser token every 30 days.
-func (pbClient *PocketBaseClient) StartSuperTokenAutoRenew(superuserEmail, superuserPassword string) {
-	interval := 24*30*time.Hour - 1*time.Hour // 30 days
-	go func() {
-		for {
-			time.Sleep(interval)
-			token, err := pbClient.authenticateSuperuser(superuserEmail, superuserPassword)
-			if err != nil {
-				log.Fatal("Error renewing token:", err)
-				continue // Prevents goroutine from crashing
-			}
-			pbClient.SuperToken = token
-			log.Println("SuperToken successfully renewed.")
-		}
-	}()
+func (pbClient *PocketBaseClient) SuperTokenRenew(superuserEmail, superuserPassword string) {
+	token, err := pbClient.authenticateSuperuser(superuserEmail, superuserPassword)
+	if err != nil {
+		log.Fatal("Error renewing token:", err)
+	}
+	pbClient.SuperToken = token
+	log.Println("SuperToken successfully renewed.")
 }

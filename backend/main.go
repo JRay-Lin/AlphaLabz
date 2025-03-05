@@ -11,6 +11,7 @@ import (
 	"alphalabz/pkg/smtp"
 	"alphalabz/pkg/tools"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/robfig/cron/v3"
 )
 
 var pbClient *pocketbase.PocketBaseClient
@@ -26,7 +28,7 @@ var SMTPClient *smtp.SMTPClient
 
 // JWTAuthMiddleware will check the JWT token and validate it.
 // If valid, it will pass the request to the next handler. Otherwise, it will return a 401 Unauthorized response.
-func JWTExpirationMiddleware(next http.Handler) http.Handler {
+func jwtExpirationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var jwtSkipPaths = map[string]bool{
 			"/health":        true,
@@ -60,6 +62,24 @@ func JWTExpirationMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func initCron(pbClient *pocketbase.PocketBaseClient, ce *casbin.CasbinEnforcer, adminEmail, adminPassword string) *cron.Cron {
+	cronHandler := cron.New()
+
+	cronHandler.AddFunc("@every 4h", func() {
+		ce.ReloadPolicies(pbClient)
+	})
+
+	cronHandler.AddFunc("@every 1d", func() {
+		tools.CleanUploads()
+	})
+
+	cronHandler.AddFunc("@every 30d", func() {
+		pbClient.SuperTokenRenew(adminEmail, adminPassword)
+	})
+
+	return cronHandler
+}
+
 func setupRouter() *chi.Mux {
 	r := chi.NewRouter()
 
@@ -71,7 +91,7 @@ func setupRouter() *chi.Mux {
 		AllowCredentials: true,
 	}))
 
-	r.Use(JWTExpirationMiddleware)
+	r.Use(jwtExpirationMiddleware)
 
 	// Health check
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -275,6 +295,23 @@ func setupRouter() *chi.Mux {
 	return r
 }
 
+func getEnv() (hostURL, adminEmail, adminPassword string, err error) {
+	// Get PocketBase host from env or default to local development server
+	hostURL = os.Getenv("POCKETBASE_URL")
+	if hostURL == "" {
+		hostURL = "http://127.0.0.1:8090"
+	}
+
+	// Get admin password from env
+	adminEmail = os.Getenv("ADMIN_EMAIL")
+	adminPassword = os.Getenv("ADMIN_PASSWORD")
+	if adminEmail == "" || adminPassword == "" {
+		fmt.Errorf("Missing required environment variables: ADMIN_EMAIL and ADMIN_PASSWORD")
+	}
+
+	return hostURL, adminEmail, adminPassword, nil
+}
+
 func main() {
 	// Initialize settings from YAML file
 	settings, err := settings.LoadSettings("settings.yml")
@@ -282,6 +319,11 @@ func main() {
 		log.Fatal(err)
 	} else {
 		log.Println("Settings loaded successfully")
+	}
+
+	pbHost, adminEmail, adminPassword, err := getEnv()
+	if err != nil {
+		log.Fatal("Failed to retrieve env variable")
 	}
 
 	// Initialize SMTP client
@@ -294,47 +336,32 @@ func main() {
 		settings.Mailer.FromName,
 	)
 
-	// Get PocketBase host from env or default to local development server
-	pbHost := os.Getenv("POCKETBASE_URL")
-	if pbHost == "" {
-		pbHost = "http://127.0.0.1:8090"
-	}
-
-	// Get admin password from env
-	adminEmail := os.Getenv("ADMIN_EMAIL")
-	adminPassword := os.Getenv("ADMIN_PASSWORD")
-	if adminEmail == "" || adminPassword == "" {
-		log.Fatal("Missing required environment variables: ADMIN_EMAIL and ADMIN_PASSWORD")
-	}
-
 	// Initialize PocketBase client with admin credentials and start supertoken auto-renewal
 	pbClient, err = pocketbase.NewPocketBase(pbHost, adminEmail, adminPassword, 10, 5*time.Second)
 	if err != nil {
 		log.Fatalf("Failed to initialize PocketBase client: %v", err)
 	}
-	pbClient.StartSuperTokenAutoRenew(adminEmail, adminPassword)
 
+	// Initialize Casbin with policies
 	policies, err := casbin.FetchPermissions(pbClient)
 	if err != nil {
 		log.Fatalf("Failed to fetch policies: %v", err)
 	}
 
-	// Initialize Casbin with policies
 	casbinEnforcer, err = casbin.InitializeCasbin(policies)
 	if err != nil {
 		log.Fatalf("Failed to initialize Casbin: %v", err)
 	}
-
-	// Start policy auto-reload every 60 minutes
-	casbinEnforcer.StartPolicyAutoReload(pbClient, 60*time.Minute)
 
 	// Create uploads directory if it doesn't exist
 	if err = tools.CreateUploadsDir(); err != nil {
 		log.Fatal("Failed to create uploads directory")
 	}
 
-	// Start auto clean uploads every 24 hours
-	tools.StartAutoCleanUploads(24 * time.Hour)
+	// Start cron jobs
+	c := initCron(pbClient, casbinEnforcer, adminEmail, adminPassword)
+	c.Start()
+	log.Println("Successfully start CRON jobs")
 
 	// Setup and start server
 	r := setupRouter()
