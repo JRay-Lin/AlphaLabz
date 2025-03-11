@@ -246,13 +246,10 @@ func setupRouter() *chi.Mux {
 			labbook.HandleLabBookView(w, r, labbookId, pbClient, casbinEnforcer)
 		})
 
-		// r.Delete("/remove", func(w http.ResponseWriter, r *http.Request) {
-		// routes.HandleLabBookRemove(w, r, pbClient)
-		// })
-
-		// r.Patch("/update", func(w http.ResponseWriter, r *http.Request) {
-		// routes.HandleLabBookUpdate(w, r, pbClient)
-		// })
+		r.Delete("/remove/{id}", func(w http.ResponseWriter, r *http.Request) {
+			labbookId := chi.URLParam(r, "id")
+			labbook.HandleLabBookRemove(w, r, labbookId, pbClient, casbinEnforcer)
+		})
 
 		r.Patch("/review", func(w http.ResponseWriter, r *http.Request) {
 			labbook.HandleLabBookReview(w, r, pbClient, casbinEnforcer)

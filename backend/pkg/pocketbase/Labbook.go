@@ -223,3 +223,25 @@ func (pbClient *PocketBaseClient) ShareLabbook(id string, RecipientId string, ac
 
 	return nil
 }
+
+func (pbClient *PocketBaseClient) DeleteLabbook(id string) error {
+	url := fmt.Sprintf("%s/api/collections/lab_books/records/%s", pbClient.BaseURL, id)
+
+	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", pbClient.SuperToken))
+
+	resp, err := pbClient.HTTPClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	return nil
+}
